@@ -10,30 +10,28 @@
 
 <body class="bg-zinc-950 text-white font-sans">
     
-<!-- Barra con los cosos de navegación -->
+<!-- Barra de navegación -->
 <nav class="flex justify-between items-center py-6 px-10 border-b border-zinc-800">
     <div class="text-2xl font-bold text-orange-600 tracking-widest">NIGHT BASS FESTIVAL</div>
     <ul class="flex space-x-8 text-sm text-gray-300 font-semibold">
         <li class="hover:text-white cursor-pointer">Lineup</li>
-        <li class="hover:text-white cursor-pointer">Entradas</li>
         <li class="hover:text-white cursor-pointer">Mapa y Servicios</li>
         <li class="hover:text-white cursor-pointer">Accesibilidad</li>
         <li class="hover:text-white cursor-pointer">Avisos</li>
     </ul>
         
-    <div class="flex space-x-4">
-        <!-- Nuevo botón que abrirá el formulario -->
+    <div class="flex space-x-4 items-center">
+        
+        <button id="abrir-perfil" class="text-gray-300 hover:text-white font-bold text-sm mr-2">Mi Perfil</button>
         <button id="abrir-modal" class="text-white font-bold hover:text-orange-500">Registrarse</button>
-        <button id="abrir-fila" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-6 py-2 font-bold rounded-sm boton-brillante">Comprar Entradas ↗</button>    </div>
+        <button id="abrir-fila" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-6 py-2 font-bold rounded-sm boton-brillante">Comprar Entradas ↗</button>
+    </div>
 </nav>
 
-<!-- Ventana emergente del registro -->
+<!-- Modal de la HU1 -->
 <div id="modal-registro" class="fixed inset-0 bg-black/80 hidden flex justify-center items-center z-50">
     <div class="max-w-md w-full bg-zinc-900 p-8 rounded-lg border border-zinc-800 relative">
-        
-        <!-- Pa cerrar la ventana emergente -->
         <button id="cerrar-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white font-bold text-xl">✕</button>
-        
         <h2 class="text-2xl font-bold mb-2">Registro de Asistente</h2>
         <p class="text-gray-400 text-sm mb-6">Regístrate para obtener tu ID único del festival.</p>
         
@@ -51,7 +49,6 @@
             </button>
         </form>
 
-        <!-- Aquí aparecerá el ID generado -->
         <div id="resultado-id" class="mt-6 hidden bg-zinc-950 p-4 border border-green-500 rounded text-center">
             <p class="text-xs text-gray-400 uppercase mb-1">Tu ID Único es:</p>
             <p id="id-generado" class="text-2xl font-bold text-green-500 tracking-widest"></p>
@@ -59,7 +56,7 @@
     </div>
 </div>
 
-<!-- HU2 -->
+<!-- Modal de la HU 2 -->
 <div id="modal-fila" class="fixed inset-0 bg-black/90 hidden flex justify-center items-center z-50">
     <div class="max-w-md w-full bg-zinc-900 p-8 rounded-lg border border-orange-600 relative text-center">
         <button id="cerrar-fila" class="absolute top-4 right-4 text-gray-400 hover:text-white font-bold text-xl">✕</button>
@@ -68,16 +65,61 @@
         <h2 class="text-3xl font-extrabold mb-4">Estás en la fila</h2>
         <p class="text-gray-400 text-sm mb-6">Por favor, no cierres ni actualices esta página. Serás redirigido automáticamente cuando sea tu turno.</p>
         
-        <!-- Círculo del temporizador -->
         <div class="flex justify-center items-center mb-6">
             <div class="w-32 h-32 rounded-full border-4 border-zinc-800 flex flex-col justify-center items-center relative">
                 <div class="absolute inset-0 rounded-full border-4 border-orange-500 border-t-transparent animate-spin"></div>
-                <span id="tiempo-espera" class="text-3xl font-bold text-white">05:00</span>
+                <span id="tiempo-espera" class="text-3xl font-bold text-white">00:00</span>
                 <span class="text-[10px] text-gray-500 tracking-widest mt-1">MINUTOS</span>
             </div>
         </div>
         
-    <p class="text-xs text-gray-500">Personas delante de ti: <span id="personas-fila" class="font-bold text-white">1,204</span></p>    </div>
+        <p class="text-xs text-gray-500">Personas delante de ti: <span id="personas-fila" class="font-bold text-white">0</span></p>
+    </div>
+</div>
+
+<!-- Modal de la HU 6 -->
+<div id="modal-perfil" class="fixed inset-0 bg-black/95 hidden flex justify-center items-center z-50">
+    <div class="max-w-2xl w-full bg-zinc-900 p-8 rounded-lg border border-zinc-700 relative">
+        <button id="cerrar-perfil" class="absolute top-4 right-4 text-gray-400 hover:text-white font-bold text-xl">✕</button>
+
+        <div class="flex items-center space-x-4 mb-8">
+            <div class="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center text-2xl font-bold text-zinc-950">NB</div>
+            <div>
+                <h2 class="text-2xl font-bold">Mi Perfil</h2>
+                <p class="text-gray-400 text-sm">Estado de cuenta verificado</p>
+            </div>
+        </div>
+
+        <h3 class="text-lg font-bold mb-4 border-b border-zinc-800 pb-2">Historial de Entradas</h3>
+
+        <div class="space-y-4">
+            <!-- Boletos -->
+            <div class="bg-zinc-950 p-4 rounded border border-zinc-800 flex justify-between items-center hover:border-orange-500 transition-colors">
+                <div>
+                    <p class="font-bold text-orange-500 uppercase text-sm">Entrada General - Día 1</p>
+                    <p class="text-xs text-gray-400 mt-1">12 Feb 2027 • Parque Norte</p>
+                    <p class="text-[10px] text-gray-500 mt-1 font-mono">ID: TCK-99482-A</p>
+                </div>
+                <div class="text-right flex flex-col items-end">
+                    <span class="inline-block bg-green-500/20 text-green-500 text-xs px-3 py-1 rounded font-bold uppercase tracking-wide mb-2">Activo</span>
+                    <button class="text-xs text-white underline hover:text-orange-500">Ver detalles</button>
+                </div>
+            </div>
+
+    
+            <div class="bg-zinc-950 p-4 rounded border border-zinc-800 flex justify-between items-center hover:border-orange-500 transition-colors">
+                <div>
+                    <p class="font-bold text-orange-500 uppercase text-sm">Pase VIP - Día 2</p>
+                    <p class="text-xs text-gray-400 mt-1">13 Feb 2027 • Parque Norte</p>
+                    <p class="text-[10px] text-gray-500 mt-1 font-mono">ID: TCK-99483-B</p>
+                </div>
+                <div class="text-right flex flex-col items-end">
+                    <span class="inline-block bg-green-500/20 text-green-500 text-xs px-3 py-1 rounded font-bold uppercase tracking-wide mb-2">Activo</span>
+                    <button class="text-xs text-white underline hover:text-orange-500">Ver detalles</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- La información del festival -->
@@ -89,9 +131,8 @@
        Tres días, diferentes sonidos y miles de historias por vivir. Reúne a tus amigos y prepárate para disfrutar de la música como nunca antes.
     </p>
 
-    <!-- coso de botones principaless -->
     <div class="flex items-center space-x-6 mb-16">
-        <button class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-8 py-3 font-bold rounded-sm text-lg">Asegura tu entrada ↗</button>
+        <button id="abrir-fila-centro" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-8 py-3 font-bold rounded-sm text-lg">Asegura tu entrada ↗</button>
         <div class="text-xs text-orange-500">
             <p> Boletería digital segura</p>
             <p>Acceso con QR dinámico</p>
@@ -100,7 +141,7 @@
 </main>
     
 <script>
-    // --- LÓGICA DE REGISTRO (HU 1) ---
+    // --- LÓGICA DE LA HU 1 ---
     const modalRegistro = document.getElementById('modal-registro');
     const btnAbrirRegistro = document.getElementById('abrir-modal');
     const btnCerrarRegistro = document.getElementById('cerrar-modal');
@@ -119,23 +160,27 @@
         document.getElementById('formulario-registro').reset();
     });
 
-    // --- LÓGICA DE FILA VIRTUAL (HU 2) ---
+    // --- LÓGICA DE LA HU 2 ---
     const modalFila = document.getElementById('modal-fila');
-    const btnAbrirFilaNav = document.getElementById('abrir-fila'); // Botón del menú
-    const btnAbrirFilaCentro = document.getElementById('abrir-fila-centro'); // Botón central
+    const btnAbrirFilaNav = document.getElementById('abrir-fila'); 
+    const btnAbrirFilaCentro = document.getElementById('abrir-fila-centro'); 
     const btnCerrarFila = document.getElementById('cerrar-fila');
     const tiempoTexto = document.getElementById('tiempo-espera');
+    const personasTexto = document.getElementById('personas-fila');
     let intervaloFila;
 
-    // Función para abrir la fila e iniciar el reloj
     function iniciarFila() {
         modalFila.classList.remove('hidden');
-        let tiempoRestante = 300; // 5 minutos en segundos
+        const totalPersonas = Math.floor(Math.random() * 2500) + 500; 
+        let tiempoRestante = Math.floor(totalPersonas * 0.25); 
         
         intervaloFila = setInterval(() => {
             let minutos = Math.floor(tiempoRestante / 60);
             let segundos = tiempoRestante % 60;
             tiempoTexto.innerText = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+            
+            let personasRestantes = Math.floor(tiempoRestante / 0.25);
+            personasTexto.innerText = personasRestantes.toLocaleString();
             
             if (tiempoRestante > 0) {
                 tiempoRestante--;
@@ -143,21 +188,33 @@
                 clearInterval(intervaloFila);
                 tiempoTexto.innerText = "00:00";
                 tiempoTexto.classList.replace('text-white', 'text-green-500');
+                personasTexto.innerText = "0";
             }
         }, 1000);
     }
 
-    // Le asignamos la función a ambos botones
-    btnAbrirFilaNav.addEventListener('click', iniciarFila);
+    if (btnAbrirFilaNav) btnAbrirFilaNav.addEventListener('click', iniciarFila);
     if (btnAbrirFilaCentro) btnAbrirFilaCentro.addEventListener('click', iniciarFila);
 
-    // Cerrar y reiniciar la fila
     btnCerrarFila.addEventListener('click', () => {
         modalFila.classList.add('hidden');
         clearInterval(intervaloFila); 
-        tiempoTexto.innerText = "05:00"; 
+        tiempoTexto.innerText = "00:00"; 
         tiempoTexto.classList.replace('text-green-500', 'text-white');
+        personasTexto.innerText = "0"; 
     });
+
+    // --- LÓGICA DE LA HU 6 ---
+    const modalPerfil = document.getElementById('modal-perfil');
+    const btnAbrirPerfil = document.getElementById('abrir-perfil');
+    const btnCerrarPerfil = document.getElementById('cerrar-perfil');
+
+    if (btnAbrirPerfil) {
+        btnAbrirPerfil.addEventListener('click', () => modalPerfil.classList.remove('hidden'));
+    }
+    if (btnCerrarPerfil) {
+        btnCerrarPerfil.addEventListener('click', () => modalPerfil.classList.add('hidden'));
+    }
 </script>
 
 </body>
