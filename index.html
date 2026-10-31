@@ -1,34 +1,44 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Night Bass Festival</title> 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .pin-marker {
+            transform: translate(-50%, -100%);
+        }
+    </style>
 </head>
 
 <body class="bg-zinc-950 text-white font-sans">
     
 <!-- Barra de navegación -->
-<nav class="flex justify-between items-center py-6 px-10 border-b border-zinc-800">
+<nav class="flex justify-between items-center py-6 px-10 border-b border-zinc-800 sticky top-0 bg-zinc-950/90 backdrop-blur-md z-40">
     <div class="text-2xl font-bold text-orange-600 tracking-widest">NIGHT BASS FESTIVAL</div>
     <ul class="flex space-x-8 text-sm text-gray-300 font-semibold">
-        <li class="hover:text-white cursor-pointer">Lineup</li>
-        <li class="hover:text-white cursor-pointer">Mapa y Servicios</li>
-        <li class="hover:text-white cursor-pointer">Accesibilidad</li>
-        <li class="hover:text-white cursor-pointer">Avisos</li>
+        <li><a href="#lineup" class="hover:text-white cursor-pointer transition-colors">Lineup</a></li>
+        <li><a href="#mapa-servicios" class="hover:text-white cursor-pointer transition-colors">Mapa y Servicios</a></li>
+        <li><a href="#accesibilidad" class="hover:text-white cursor-pointer transition-colors">Accesibilidad</a></li>
+        <li><a href="#avisos" class="hover:text-white cursor-pointer transition-colors">Avisos</a></li>
     </ul>
         
     <div class="flex space-x-4 items-center">
-        
-        <button id="abrir-perfil" class="text-gray-300 hover:text-white font-bold text-sm mr-2">Mi Perfil</button>
-        <button id="abrir-modal" class="text-white font-bold hover:text-orange-500">Registrarse</button>
-        <button id="abrir-fila" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-6 py-2 font-bold rounded-sm boton-brillante">Comprar Entradas ↗</button>
+        <!-- Control para alternar vista de Administrador -->
+        <button id="toggle-admin" class="bg-zinc-800 hover:bg-zinc-700 text-orange-400 text-xs font-bold px-3 py-1.5 rounded border border-orange-500/30 transition-colors cursor-pointer">
+            🔒 Modo Admin: <span id="estado-rol">Apagado</span>
+        </button>
+
+        <button id="abrir-perfil" class="text-gray-300 hover:text-white font-bold text-sm mr-2 cursor-pointer">Mi Perfil</button>
+        <button id="abrir-modal" class="text-white font-bold hover:text-orange-500 cursor-pointer">Registrarse</button>
+        <button id="abrir-fila" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-6 py-2 font-bold rounded-sm boton-brillante cursor-pointer">Comprar Entradas ↗</button>
     </div>
 </nav>
 
-<!-- Modal de la HU1 -->
+<!-- Modal de Registro (HU 1) -->
 <div id="modal-registro" class="fixed inset-0 bg-black/80 hidden flex justify-center items-center z-50">
     <div class="max-w-md w-full bg-zinc-900 p-8 rounded-lg border border-zinc-800 relative">
         <button id="cerrar-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white font-bold text-xl">✕</button>
@@ -56,15 +66,13 @@
     </div>
 </div>
 
-<!-- Modal de la HU 2 -->
+<!-- Modal de Fila Virtual (HU 2) -->
 <div id="modal-fila" class="fixed inset-0 bg-black/90 hidden flex justify-center items-center z-50">
     <div class="max-w-md w-full bg-zinc-900 p-8 rounded-lg border border-orange-600 relative text-center">
         <button id="cerrar-fila" class="absolute top-4 right-4 text-gray-400 hover:text-white font-bold text-xl">✕</button>
-        
         <p class="text-orange-500 text-xs font-bold tracking-widest mb-2 uppercase">Fila Virtual Activa</p>
         <h2 class="text-3xl font-extrabold mb-4">Estás en la fila</h2>
-        <p class="text-gray-400 text-sm mb-6">Por favor, no cierres ni actualices esta página. Serás redirigido automáticamente cuando sea tu turno.</p>
-        
+        <p class="text-gray-400 text-sm mb-6">Por favor, no cierres ni actualices esta página.</p>
         <div class="flex justify-center items-center mb-6">
             <div class="w-32 h-32 rounded-full border-4 border-zinc-800 flex flex-col justify-center items-center relative">
                 <div class="absolute inset-0 rounded-full border-4 border-orange-500 border-t-transparent animate-spin"></div>
@@ -72,16 +80,14 @@
                 <span class="text-[10px] text-gray-500 tracking-widest mt-1">MINUTOS</span>
             </div>
         </div>
-        
         <p class="text-xs text-gray-500">Personas delante de ti: <span id="personas-fila" class="font-bold text-white">0</span></p>
     </div>
 </div>
 
-<!-- Modal de la HU 6 -->
+<!-- Modal de Perfil (HU 6) -->
 <div id="modal-perfil" class="fixed inset-0 bg-black/95 hidden flex justify-center items-center z-50">
     <div class="max-w-2xl w-full bg-zinc-900 p-8 rounded-lg border border-zinc-700 relative">
         <button id="cerrar-perfil" class="absolute top-4 right-4 text-gray-400 hover:text-white font-bold text-xl">✕</button>
-
         <div class="flex items-center space-x-4 mb-8">
             <div class="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center text-2xl font-bold text-zinc-950">NB</div>
             <div>
@@ -89,65 +95,338 @@
                 <p class="text-gray-400 text-sm">Estado de cuenta verificado</p>
             </div>
         </div>
-
         <h3 class="text-lg font-bold mb-4 border-b border-zinc-800 pb-2">Historial de Entradas</h3>
-
         <div class="space-y-4">
-            <!-- Boletos -->
-            <div class="bg-zinc-950 p-4 rounded border border-zinc-800 flex justify-between items-center hover:border-orange-500 transition-colors">
+            <div class="bg-zinc-950 p-4 rounded border border-zinc-800 flex justify-between items-center">
                 <div>
                     <p class="font-bold text-orange-500 uppercase text-sm">Entrada General - Día 1</p>
                     <p class="text-xs text-gray-400 mt-1">12 Feb 2027 • Parque Norte</p>
-                    <p class="text-[10px] text-gray-500 mt-1 font-mono">ID: TCK-99482-A</p>
                 </div>
-                <div class="text-right flex flex-col items-end">
-                    <span class="inline-block bg-green-500/20 text-green-500 text-xs px-3 py-1 rounded font-bold uppercase tracking-wide mb-2">Activo</span>
-                    <button class="text-xs text-white underline hover:text-orange-500">Ver detalles</button>
-                </div>
-            </div>
-
-    
-            <div class="bg-zinc-950 p-4 rounded border border-zinc-800 flex justify-between items-center hover:border-orange-500 transition-colors">
-                <div>
-                    <p class="font-bold text-orange-500 uppercase text-sm">Pase VIP - Día 2</p>
-                    <p class="text-xs text-gray-400 mt-1">13 Feb 2027 • Parque Norte</p>
-                    <p class="text-[10px] text-gray-500 mt-1 font-mono">ID: TCK-99483-B</p>
-                </div>
-                <div class="text-right flex flex-col items-end">
-                    <span class="inline-block bg-green-500/20 text-green-500 text-xs px-3 py-1 rounded font-bold uppercase tracking-wide mb-2">Activo</span>
-                    <button class="text-xs text-white underline hover:text-orange-500">Ver detalles</button>
-                </div>
+                <span class="bg-green-500/20 text-green-500 text-xs px-3 py-1 rounded font-bold uppercase">Activo</span>
             </div>
         </div>
     </div>
 </div>
 
-<!-- La información del festival -->
+<!-- Modal Administrador: Crear o Editar Servicio -->
+<div id="modal-marcador" class="fixed inset-0 bg-black/80 hidden flex justify-center items-center z-50">
+    <div class="max-w-md w-full bg-zinc-900 p-6 rounded-lg border border-orange-500">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="titulo-modal-admin" class="text-xl font-bold text-orange-500">⚙️ [ADMIN] Gestión de Servicio</h3>
+            <button id="cancelar-marcador" class="text-gray-400 hover:text-white font-bold text-xl">✕</button>
+        </div>
+        <form id="form-marcador" class="space-y-4">
+            <input type="hidden" id="indice-servicio" value="">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Tipo de Servicio / Ícono</label>
+                <select id="tipo-marcador" class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
+                    <option value="💧 Puntos de hidratación">💧 Puntos de hidratación</option>
+                    <option value="🚻 Baños">🚻 Baños</option>
+                    <option value="♿ Rampas">♿ Rampas y Accesibilidad</option>
+                    <option value="🚑 Puestos médicos">🚑 Puestos médicos</option>
+                    <option value="🍔 Comidas y Bebidas">🍔 Comidas y Bebidas</option>
+                    <option value="🎶 Escenario Principal">🎶 Escenario Principal</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Nombre / Descripción del Servicio</label>
+                <input type="text" id="desc-marcador" required placeholder="Ej: Hidratación Zona Norte #2" class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
+            </div>
+            <div class="flex justify-between items-center pt-2">
+                <button type="button" id="btn-eliminar-servicio" class="bg-red-950/60 hover:bg-red-900 text-red-400 border border-red-800 px-4 py-2 rounded text-sm font-bold hidden transition-colors cursor-pointer">
+                    🗑️ Eliminar Servicio
+                </button>
+                <div class="flex space-x-3 ml-auto">
+                    <button type="button" id="btn-cancelar-modal" class="px-4 py-2 text-sm font-bold text-gray-400 hover:text-white">Cancelar</button>
+                    <button type="submit" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-6 py-2 font-bold rounded-sm text-sm cursor-pointer">Guardar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Contenido Principal -->
 <main class="px-10 mt-16">
     <p class="text-red-500 text-xs font-bold tracking-widest mb-4">— MEDELLÍN, COLOMBIA / EDICIÓN 2027</p>
     <h1 class="text-6xl font-extrabold leading-none mb-6">TODA LA MÚSICA<br>EN UN SOLO LUGAR.</h1>
+
     <p class="text-gray-400 mb-8 max-w-lg text-sm">
         <span class="font-bold text-gray-200">12 — 14 FEBRERO 2027 · PARQUE NORTE</span><br><br>
-       Tres días, diferentes sonidos y miles de historias por vivir. Reúne a tus amigos y prepárate para disfrutar de la música como nunca antes.
+        Tres días, diferentes sonidos y miles de historias por vivir. Reúne a tus amigos y prepárate para disfrutar de la música como nunca antes.
     </p>
 
     <div class="flex items-center space-x-6 mb-16">
-        <button id="abrir-fila-centro" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-8 py-3 font-bold rounded-sm text-lg">Asegura tu entrada ↗</button>
+        <button id="abrir-fila-centro" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-8 py-3 font-bold rounded-sm text-lg cursor-pointer">Asegura tu entrada ↗</button>
         <div class="text-xs text-orange-500">
-            <p> Boletería digital segura</p>
+            <p>Boletería digital segura</p>
             <p>Acceso con QR dinámico</p>
         </div>
     </div>
-</main>
-    
-<script>
-    // --- LÓGICA DE LA HU 1 ---
-    const modalRegistro = document.getElementById('modal-registro');
-    const btnAbrirRegistro = document.getElementById('abrir-modal');
-    const btnCerrarRegistro = document.getElementById('cerrar-modal');
 
-    btnAbrirRegistro.addEventListener('click', () => modalRegistro.classList.remove('hidden'));
-    btnCerrarRegistro.addEventListener('click', () => {
+    <!-- SECCIÓN: MAPA Y SERVICIOS -->
+    <section id="mapa-servicios" class="py-16 border-t border-zinc-800">
+        <div class="mb-6 flex justify-between items-end">
+            <div>
+                <span class="text-orange-500 font-bold text-xs tracking-widest uppercase">Panel Interactivo del Festival</span>
+                <h2 class="text-4xl font-extrabold mt-1">MAPA Y SERVICIOS</h2>
+            </div>
+            <!-- Botones EXCLUSIVOS de Administrador (Ocultos por defecto con !hidden) -->
+            <div class="flex gap-3">
+                <button id="btn-limpiar-mapa" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800 px-3 py-2 rounded text-xs font-bold transition-colors !hidden cursor-pointer">
+                    🗑️ Eliminar Mapa y Servicios (Admin)
+                </button>
+                <label id="label-cargar-mapa" class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded text-sm font-bold cursor-pointer transition-colors border border-zinc-700 flex items-center gap-2 !hidden">
+                    <span>📷 Cargar Imagen del Mapa</span>
+                    <input type="file" id="input-mapa" accept="image/*" class="hidden">
+                </label>
+            </div>
+        </div>
+
+        <p id="instrucciones-mapa" class="text-gray-400 text-sm mb-4">
+            ℹ️ <span class="text-gray-200">Modo Asistente:</span> Puedes ver todos los servicios oficiales activos en el mapa interactivo. 
+        </p>
+
+        <!-- Contenedor Interactivo del Mapa -->
+        <div id="contenedor-mapa" class="relative w-full max-w-4xl mx-auto h-[450px] sm:h-[550px] bg-zinc-900 rounded-lg border-2 border-dashed border-zinc-700 flex flex-col justify-center items-center overflow-hidden">
+        <div id="placeholder-mapa" class="text-center p-8">
+            <span class="text-5xl mb-4 block">🗺️</span>
+            <p class="text-gray-400 font-bold">No hay un mapa cargado aún.</p>
+            <p id="subtexto-placeholder" class="text-gray-600 text-xs mt-1">Haz clic en 'Cargar Imagen del Mapa' arriba para agregar una imagen.</p>
+        </div>
+        <!-- Usamos object-contain para que la imagen horizontal se adapte completa sin recortarse -->
+        <img id="imagen-mapa" class="w-full h-full object-contain hidden select-none p-2" alt="Mapa del festival">
+        <div id="capa-pines" class="absolute inset-0 pointer-events-none"></div>
+</div>
+    </section>
+
+    <!-- SECCIÓN: ACCESIBILIDAD -->
+    <section id="accesibilidad" class="py-16 border-t border-zinc-800">
+        <span class="text-orange-500 font-bold text-xs tracking-widest uppercase">Inclusión y Confort</span>
+        <h2 class="text-4xl font-extrabold mt-1 mb-6">ACCESIBILIDAD</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+                <span class="text-3xl mb-2 block">♿</span>
+                <h3 class="font-bold text-lg mb-2">Rampas y Plataformas</h3>
+                <p class="text-gray-400 text-sm">Tarimas elevadas de visión preferencial conectadas mediante rampas señalizadas.</p>
+            </div>
+            <div class="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+                <span class="text-3xl mb-2 block">🤟</span>
+                <h3 class="font-bold text-lg mb-2">Interpretación LSC</h3>
+                <p class="text-gray-400 text-sm">Intérpretes de Lengua de Señas en las presentaciones principales.</p>
+            </div>
+            <div class="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+                <span class="text-3xl mb-2 block">🎧</span>
+                <h3 class="font-bold text-lg mb-2">Zonas de Bajo Estímulo</h3>
+                <p class="text-gray-400 text-sm">Espacios de descanso sensorial tranquilos.</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    // --- CONTROL DE ROL DE ADMINISTRADOR ---
+    let esAdministrador = false;
+    const btnToggleAdmin = document.getElementById('toggle-admin');
+    const estadoRol = document.getElementById('estado-rol');
+    const instruccionesMapa = document.getElementById('instrucciones-mapa');
+    const btnLimpiarMapa = document.getElementById('btn-limpiar-mapa');
+    const labelCargarMapa = document.getElementById('label-cargar-mapa');
+    const subtextoPlaceholder = document.getElementById('subtexto-placeholder');
+
+    btnToggleAdmin.addEventListener('click', () => {
+        esAdministrador = !esAdministrador;
+        if (esAdministrador) {
+            estadoRol.innerText = "Activado (Admin)";
+            btnToggleAdmin.classList.replace('bg-zinc-800', 'bg-orange-600');
+            btnToggleAdmin.classList.replace('text-orange-400', 'text-zinc-950');
+            
+            // Mostrar controles admin
+            btnLimpiarMapa.classList.remove('!hidden');
+            labelCargarMapa.classList.remove('!hidden');
+            
+            subtextoPlaceholder.innerText = "Haz clic en 'Cargar Imagen del Mapa' arriba para agregar una imagen.";
+            instruccionesMapa.innerHTML = '⚠️ <span class="text-orange-400 font-bold">Modo Administrador Activo:</span> Carga el mapa del recinto o haz clic sobre la imagen para <strong>crear/editar servicios</strong>.';
+        } else {
+            estadoRol.innerText = "Apagado";
+            btnToggleAdmin.classList.replace('bg-orange-600', 'bg-zinc-800');
+            btnToggleAdmin.classList.replace('text-zinc-950', 'text-orange-400');
+            
+            // Ocultar controles admin
+            btnLimpiarMapa.classList.add('!hidden');
+            labelCargarMapa.classList.add('!hidden');
+            
+            subtextoPlaceholder.innerText = "El mapa oficial estará disponible próximamente.";
+            instruccionesMapa.innerHTML = 'ℹ️ <span class="text-gray-200">Modo Asistente:</span> Puedes ver todos los servicios oficiales activos en el mapa interactivo.';
+        }
+        cargarServiciosGuardados(); // Re-renderizar pines para actualizar estado del tooltip
+    });
+
+    // --- GESTIÓN DE MAPA Y SERVICIOS ---
+    const contenedorMapa = document.getElementById('contenedor-mapa');
+    const capaPines = document.getElementById('capa-pines');
+    const modalMarcador = document.getElementById('modal-marcador');
+    const formMarcador = document.getElementById('form-marcador');
+    const btnCancelarMarcador = document.getElementById('cancelar-marcador');
+    const btnCancelModal = document.getElementById('btn-cancelar-modal');
+    const btnEliminarServicio = document.getElementById('btn-eliminar-servicio');
+    const tituloModalAdmin = document.getElementById('titulo-modal-admin');
+    const inputIndiceServicio = document.getElementById('indice-servicio');
+    const inputTipo = document.getElementById('tipo-marcador');
+    const inputDesc = document.getElementById('desc-marcador');
+    const inputMapa = document.getElementById('input-mapa');
+    const imagenMapa = document.getElementById('imagen-mapa');
+    const placeholderMapa = document.getElementById('placeholder-mapa');
+
+    let clickCoords = { x: 0, y: 0 };
+
+    inputMapa.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const base64Image = event.target.result;
+                localStorage.setItem('mapa_festival_img', base64Image);
+                mostrarImagenMapa(base64Image);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function mostrarImagenMapa(src) {
+        imagenMapa.src = src;
+        imagenMapa.classList.remove('hidden');
+        placeholderMapa.classList.add('hidden');
+        contenedorMapa.classList.remove('border-2', 'border-dashed');
+    }
+
+    function ocultarImagenMapa() {
+        imagenMapa.removeAttribute('src');
+        imagenMapa.classList.add('hidden');
+        placeholderMapa.classList.remove('hidden');
+        contenedorMapa.classList.add('border-2', 'border-dashed');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const mapaGuardado = localStorage.getItem('mapa_festival_img');
+        if (mapaGuardado) {
+            mostrarImagenMapa(mapaGuardado);
+        } else {
+            ocultarImagenMapa();
+        }
+        cargarServiciosGuardados();
+    });
+
+    contenedorMapa.addEventListener('click', (e) => {
+        if (!esAdministrador) return;
+        if (e.target.closest('.pin-element')) return;
+
+        const rect = contenedorMapa.getBoundingClientRect();
+        clickCoords = {
+            x: ((e.clientX - rect.left) / rect.width) * 100,
+            y: ((e.clientY - rect.top) / rect.height) * 100
+        };
+
+        inputIndiceServicio.value = "";
+        inputTipo.value = "💧 Puntos de hidratación";
+        inputDesc.value = "";
+        tituloModalAdmin.innerText = "⚙️ [ADMIN] Crear Servicio en el Mapa";
+        btnEliminarServicio.classList.add('hidden');
+
+        modalMarcador.classList.remove('hidden');
+    });
+
+    const cerrarModalAdmin = () => modalMarcador.classList.add('hidden');
+    btnCancelarMarcador.addEventListener('click', cerrarModalAdmin);
+    btnCancelModal.addEventListener('click', cerrarModalAdmin);
+
+    formMarcador.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const tipo = inputTipo.value;
+        const descripcion = inputDesc.value;
+        const index = inputIndiceServicio.value;
+
+        let servicios = JSON.parse(localStorage.getItem('servicios_festival') || '[]');
+
+        if (index === "") {
+            const nuevoServicio = { x: clickCoords.x, y: clickCoords.y, tipo, descripcion };
+            servicios.push(nuevoServicio);
+        } else {
+            servicios[index].tipo = tipo;
+            servicios[index].descripcion = descripcion;
+        }
+
+        localStorage.setItem('servicios_festival', JSON.stringify(servicios));
+        cargarServiciosGuardados();
+        modalMarcador.classList.add('hidden');
+    });
+
+    btnEliminarServicio.addEventListener('click', () => {
+        const index = inputIndiceServicio.value;
+        if (index !== "") {
+            let servicios = JSON.parse(localStorage.getItem('servicios_festival') || '[]');
+            servicios.splice(index, 1);
+            localStorage.setItem('servicios_festival', JSON.stringify(servicios));
+            cargarServiciosGuardados();
+            modalMarcador.classList.add('hidden');
+        }
+    });
+
+    function cargarServiciosGuardados() {
+        capaPines.innerHTML = '';
+        let servicios = JSON.parse(localStorage.getItem('servicios_festival') || '[]');
+        servicios.forEach((s, idx) => renderizarPin(s, idx));
+    }
+
+    function renderizarPin(s, idx) {
+        const pin = document.createElement('div');
+        pin.className = 'absolute pin-marker pin-element pointer-events-auto cursor-pointer group flex flex-col items-center';
+        pin.style.left = `${s.x}%`;
+        pin.style.top = `${s.y}%`;
+
+        pin.innerHTML = `
+            <div class="bg-orange-600 text-white font-bold p-2 rounded-full shadow-lg text-sm transform transition-transform group-hover:scale-125 border border-white flex items-center justify-center">
+                ${s.tipo.split(' ')[0]}
+            </div>
+            <div class="hidden group-hover:flex flex-col items-center absolute bottom-full mb-2 z-30 pointer-events-none">
+                <div class="bg-zinc-950 border border-orange-500 text-white text-xs p-2 rounded shadow-xl whitespace-nowrap">
+                    <p class="font-bold text-orange-500">${s.tipo}</p>
+                    <p class="text-gray-300">${s.descripcion}</p>
+                    ${esAdministrador ? '<p class="text-[10px] text-orange-400 mt-1">🖱️ Clic para editar/eliminar</p>' : ''}
+                </div>
+            </div>
+        `;
+
+        pin.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!esAdministrador) return;
+
+            inputIndiceServicio.value = idx;
+            inputTipo.value = s.tipo;
+            inputDesc.value = s.descripcion;
+            tituloModalAdmin.innerText = "⚙️ [ADMIN] Actualizar o Eliminar Servicio";
+            btnEliminarServicio.classList.remove('hidden');
+
+            modalMarcador.classList.remove('hidden');
+        });
+
+        capaPines.appendChild(pin);
+    }
+
+    // BOTÓN DE ELIMINACIÓN COMPLETA (FOTO Y SERVICIOS)
+    btnLimpiarMapa.addEventListener('click', () => {
+        if (confirm("¿Estás seguro de eliminar la imagen del mapa y TODOS los servicios creados?")) {
+            localStorage.removeItem('mapa_festival_img');
+            localStorage.removeItem('servicios_festival');
+            capaPines.innerHTML = '';
+            inputMapa.value = '';
+            ocultarImagenMapa();
+        }
+    });
+
+    // --- LÓGICA DE HU 1 (Registro) ---
+    const modalRegistro = document.getElementById('modal-registro');
+    document.getElementById('abrir-modal').addEventListener('click', () => modalRegistro.classList.remove('hidden'));
+    document.getElementById('cerrar-modal').addEventListener('click', () => {
         modalRegistro.classList.add('hidden');
         document.getElementById('resultado-id').classList.add('hidden'); 
     });
@@ -157,13 +436,13 @@
         const idUnico = 'NB-' + Math.random().toString(36).substring(2, 8).toUpperCase();
         document.getElementById('id-generado').innerText = idUnico;
         document.getElementById('resultado-id').classList.remove('hidden');
-        document.getElementById('formulario-registro').reset();
+        this.reset();
     });
 
-    // --- LÓGICA DE LA HU 2 ---
+    // --- LÓGICA DE HU 2 (Fila Virtual) ---
     const modalFila = document.getElementById('modal-fila');
-    const btnAbrirFilaNav = document.getElementById('abrir-fila'); 
-    const btnAbrirFilaCentro = document.getElementById('abrir-fila-centro'); 
+    const btnAbrirFilaNav = document.getElementById('abrir-fila');
+    const btnAbrirFilaCentro = document.getElementById('abrir-fila-centro');
     const btnCerrarFila = document.getElementById('cerrar-fila');
     const tiempoTexto = document.getElementById('tiempo-espera');
     const personasTexto = document.getElementById('personas-fila');
@@ -204,17 +483,10 @@
         personasTexto.innerText = "0"; 
     });
 
-    // --- LÓGICA DE LA HU 6 ---
+    // --- LÓGICA DE HU 6 (Perfil) ---
     const modalPerfil = document.getElementById('modal-perfil');
-    const btnAbrirPerfil = document.getElementById('abrir-perfil');
-    const btnCerrarPerfil = document.getElementById('cerrar-perfil');
-
-    if (btnAbrirPerfil) {
-        btnAbrirPerfil.addEventListener('click', () => modalPerfil.classList.remove('hidden'));
-    }
-    if (btnCerrarPerfil) {
-        btnCerrarPerfil.addEventListener('click', () => modalPerfil.classList.add('hidden'));
-    }
+    document.getElementById('abrir-perfil').addEventListener('click', () => modalPerfil.classList.remove('hidden'));
+    document.getElementById('cerrar-perfil').addEventListener('click', () => modalPerfil.classList.add('hidden'));
 </script>
 
 </body>
