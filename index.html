@@ -697,15 +697,18 @@
     });
 
     btnEliminarServicio.addEventListener('click', () => {
-        const index = inputIndiceServicio.value;
-        if (index !== "") {
+    const index = inputIndiceServicio.value;
+    if (index !== "") {
+        // Ventana de confirmación de seguridad
+        if (confirm("¿Está seguro de que desea eliminar este servicio?")) {
             let servicios = JSON.parse(localStorage.getItem('servicios_festival') || '[]');
             servicios.splice(index, 1);
             localStorage.setItem('servicios_festival', JSON.stringify(servicios));
             cargarServiciosGuardados();
             modalMarcador.classList.add('hidden');
         }
-    });
+    }
+});
 
     function cargarServiciosGuardados() {
         capaPines.innerHTML = '';
