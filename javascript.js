@@ -38,79 +38,219 @@
     });
 }
 
-    // --- INICIO DE SESIÓN ---
+    // --- INICIO DE SESIÓN Y REGISTRO ---
+    const STORAGE_KEY_USUARIOS = 'festival_usuarios';
+    const STORAGE_KEY_SESION = 'festival_sesion_actual';
     const modalLogin = document.getElementById('modal-login');
     const abrirLogin = document.getElementById('abrir-login');
     const cerrarLogin = document.getElementById('cerrar-login');
     const formularioLogin = document.getElementById('formulario-login');
     const resultadoLogin = document.getElementById('resultado-login');
-
-    if (abrirLogin && modalLogin) {
-    abrirLogin.addEventListener('click', () => modalLogin.classList.remove('hidden'));
-}
-    if (cerrarLogin && modalLogin) {
-    cerrarLogin.addEventListener('click', () => {
-        modalLogin.classList.add('hidden');
-        if (resultadoLogin) resultadoLogin.classList.add('hidden');
-    });
-}
-
-    if (formularioLogin) {
-    formularioLogin.addEventListener('submit', (e) => {
-        e.preventDefault();
-        if (resultadoLogin) resultadoLogin.classList.remove('hidden');
-        setTimeout(() => {
-            if (modalLogin) modalLogin.classList.add('hidden');
-            if (resultadoLogin) resultadoLogin.classList.add('hidden');
-            formularioLogin.reset();
-        }, 1500);
-    });
-}
-
-    // --- LÓGICA DE REGISTRO Y GENERACIÓN DE ID (HU 1) ---
     const modalRegistro = document.getElementById('modal-registro');
     const abrirModalRegistro = document.getElementById('abrir-modal');
     const cerrarModalRegistro = document.getElementById('cerrar-modal');
     const formularioRegistro = document.getElementById('formulario-registro');
 
+    function obtenerUsuarios() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY_USUARIOS) || '[]');
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function guardarUsuarios(usuarios) {
+        localStorage.setItem(STORAGE_KEY_USUARIOS, JSON.stringify(usuarios));
+    }
+
+    function obtenerSesionActual() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY_SESION) || 'null');
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function guardarSesionActual(usuario) {
+        localStorage.setItem(STORAGE_KEY_SESION, JSON.stringify({
+            nombre: usuario.nombre,
+            correo: usuario.correo,
+            id: usuario.id
+        }));
+    }
+
+    function limpiarSesionActual() {
+        localStorage.removeItem(STORAGE_KEY_SESION);
+    }
+
+    function mostrarResultadoLogin(mensaje, tipo = 'success') {
+        if (!resultadoLogin) return;
+
+        resultadoLogin.textContent = mensaje;
+        resultadoLogin.classList.remove('hidden', 'border-green-500', 'text-green-400', 'border-red-500', 'text-red-400');
+
+        if (tipo === 'error') {
+            resultadoLogin.classList.add('border-red-500', 'text-red-400');
+        } else {
+            resultadoLogin.classList.add('border-green-500', 'text-green-400');
+        }
+
+        resultadoLogin.classList.remove('hidden');
+    }
+
+    function actualizarBotonesAutenticacion() {
+        const usuarioSesion = obtenerSesionActual();
+        if (abrirLogin) {
+            abrirLogin.textContent = usuarioSesion ? `Hola, ${usuarioSesion.nombre.split(' ')[0]}` : 'Iniciar Sesión';
+        }
+        if (abrirModalRegistro) {
+            abrirModalRegistro.textContent = usuarioSesion ? 'Cerrar sesión' : 'Registrarse';
+        }
+    }
+
+    function generarIdAsistente() {
+        return 'NB-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+
+    if (abrirLogin && modalLogin) {
+        abrirLogin.addEventListener('click', () => {
+            const usuarioSesion = obtenerSesionActual();
+            if (usuarioSesion) {
+                limpiarSesionActual();
+                actualizarBotonesAutenticacion();
+                mostrarResultadoLogin('Sesión cerrada correctamente.', 'success');
+                return;
+            }
+
+            modalLogin.classList.remove('hidden');
+        });
+    }
+
+    if (cerrarLogin && modalLogin) {
+        cerrarLogin.addEventListener('click', () => {
+            modalLogin.classList.add('hidden');
+            if (resultadoLogin) {
+                resultadoLogin.classList.add('hidden');
+                resultadoLogin.textContent = '';
+            }
+        });
+    }
+
+    if (formularioLogin) {
+        formularioLogin.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const correo = (document.getElementById('login-correo')?.value || '').trim().toLowerCase();
+            const password = document.getElementById('login-password')?.value || '';
+            const usuarios = obtenerUsuarios();
+            const usuario = usuarios.find((item) => item.correo.toLowerCase() === correo && item.password === password);
+
+            if (!usuario) {
+                mostrarResultadoLogin('Correo o contraseña incorrectos.', 'error');
+                return;
+            }
+
+            guardarSesionActual(usuario);
+            actualizarBotonesAutenticacion();
+            mostrarResultadoLogin(`¡Bienvenido/a, ${usuario.nombre}!`, 'success');
+
+            setTimeout(() => {
+                if (modalLogin) modalLogin.classList.add('hidden');
+                if (resultadoLogin) resultadoLogin.classList.add('hidden');
+                formularioLogin.reset();
+            }, 1400);
+        });
+    }
+
     if (abrirModalRegistro && modalRegistro) {
-    abrirModalRegistro.addEventListener('click', () => {
-        modalRegistro.classList.remove('hidden');
-    });
-}
+        abrirModalRegistro.addEventListener('click', () => {
+            const usuarioSesion = obtenerSesionActual();
+            if (usuarioSesion) {
+                limpiarSesionActual();
+                actualizarBotonesAutenticacion();
+                return;
+            }
+
+            modalRegistro.classList.remove('hidden');
+        });
+    }
 
     if (cerrarModalRegistro && modalRegistro) {
-    cerrarModalRegistro.addEventListener('click', () => {
-        modalRegistro.classList.add('hidden');
-        const resultadoId = document.getElementById('resultado-id');
-        if (resultadoId) resultadoId.classList.add('hidden');
-    });
-}
+        cerrarModalRegistro.addEventListener('click', () => {
+            modalRegistro.classList.add('hidden');
+            const resultadoId = document.getElementById('resultado-id');
+            if (resultadoId) resultadoId.classList.add('hidden');
+        });
+    }
 
     if (formularioRegistro) {
-    formularioRegistro.addEventListener('submit', function(evento) {
-        evento.preventDefault();
-        const idUnico = 'NB-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-        const idGenerado = document.getElementById('id-generado');
-        const resultadoId = document.getElementById('resultado-id');
+        formularioRegistro.addEventListener('submit', function(evento) {
+            evento.preventDefault();
 
-        if (idGenerado) idGenerado.innerText = idUnico;
-        if (resultadoId) resultadoId.classList.remove('hidden');
+            const nombre = (document.getElementById('nombre')?.value || '').trim();
+            const correo = (document.getElementById('correo')?.value || '').trim().toLowerCase();
+            const password = document.getElementById('password')?.value || '';
+            const confirmarPassword = document.getElementById('confirmar-password')?.value || '';
+            const usuarios = obtenerUsuarios();
 
-        // Guardar automáticamente en el historial de entradas (HU 7)
-        let entradas = JSON.parse(localStorage.getItem('entradas_usuario') || '[]');
-        entradas.push({
-            titulo: 'Entrada General - Festival 2027',
-            fecha: '12-14 Feb 2027 • Parque Norte',
-            id: idUnico,
-            estado: 'Activo'
+            if (!nombre || !correo || !password || !confirmarPassword) {
+                window.alert('Completa todos los campos del registro.');
+                return;
+            }
+
+            if (password.length < 6) {
+                window.alert('La contraseña debe tener al menos 6 caracteres.');
+                return;
+            }
+
+            if (password !== confirmarPassword) {
+                window.alert('Las contraseñas no coinciden.');
+                return;
+            }
+
+            if (usuarios.some((usuario) => usuario.correo.toLowerCase() === correo)) {
+                window.alert('Este correo ya está registrado.');
+                return;
+            }
+
+            const idUnico = generarIdAsistente();
+            const nuevoUsuario = {
+                nombre,
+                correo,
+                password,
+                id: idUnico
+            };
+
+            usuarios.push(nuevoUsuario);
+            guardarUsuarios(usuarios);
+            guardarSesionActual(nuevoUsuario);
+            actualizarBotonesAutenticacion();
+
+            const idGenerado = document.getElementById('id-generado');
+            const resultadoId = document.getElementById('resultado-id');
+
+            if (idGenerado) idGenerado.innerText = idUnico;
+            if (resultadoId) resultadoId.classList.remove('hidden');
+
+            let entradas = JSON.parse(localStorage.getItem('entradas_usuario') || '[]');
+            entradas.push({
+                titulo: 'Entrada General - Festival 2027',
+                fecha: '12-14 Feb 2027 • Parque Norte',
+                id: idUnico,
+                estado: 'Activo'
+            });
+            localStorage.setItem('entradas_usuario', JSON.stringify(entradas));
+            cargarEntradasPerfil();
+
+            this.reset();
+            setTimeout(() => {
+                if (modalRegistro) modalRegistro.classList.add('hidden');
+                if (resultadoId) resultadoId.classList.add('hidden');
+            }, 2000);
         });
-        localStorage.setItem('entradas_usuario', JSON.stringify(entradas));
-        cargarEntradasPerfil();
+    }
 
-        this.reset();
-    });
-}
+    actualizarBotonesAutenticacion();
 
     /// FILA VIRTUAL - HU 2
     const modalFila = document.getElementById('modal-fila');
