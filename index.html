@@ -78,11 +78,6 @@
     </ul>
 
     <div class="top-actions flex space-x-4 items-center">
-        <!-- Control para alternar vista de Administrador -->
-        <button id="toggle-admin" class="bg-zinc-800 hover:bg-zinc-700 text-orange-400 text-xs font-bold px-3 py-1.5 rounded border border-orange-500/30 transition-colors cursor-pointer">
-            🔒 Modo Admin: <span id="estado-rol">Apagado</span>
-        </button>
-
         <button id="abrir-perfil" class="hidden text-gray-300 hover:text-white font-bold text-sm mr-2 cursor-pointer">Mi Perfil</button>
         <button id="abrir-login" class="text-gray-300 hover:text-white font-bold text-sm cursor-pointer">Iniciar Sesión</button>
         <button id="abrir-modal" class="text-white font-bold hover:text-orange-500 cursor-pointer">Registrarse</button>
@@ -127,12 +122,20 @@
                 <input type="text" id="nombre" required class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
             </div>
             <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Número de Identificación (máximo 10 caracteres)</label>
+                <input type="text" id="numero-identificacion" required maxlength="10" pattern="[A-Za-z0-9.-]{1,10}" autocomplete="off" class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Teléfono (opcional)</label>
+                <input type="tel" id="telefono" maxlength="20" class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
+            </div>
+            <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Correo Electrónico</label>
                 <input type="email" id="correo" required class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Contraseña</label>
-                <input type="password" id="password" required class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
+                <input type="password" id="password" required minlength="8" maxlength="72" class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Confirmar Contraseña</label>
@@ -143,6 +146,7 @@
             </button>
         </form>
 
+        <div id="resultado-registro" class="mt-4 hidden border rounded p-3 text-sm font-bold text-center" aria-live="polite"></div>
         <div id="resultado-id" class="mt-6 hidden bg-zinc-950 p-4 border border-green-500 rounded text-center">
             <p class="text-xs text-gray-400 uppercase mb-1">Tu ID Único es:</p>
             <p id="id-generado" class="text-2xl font-bold text-green-500 tracking-widest"></p>
@@ -180,8 +184,7 @@
             <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Tipo de entrada</label>
                 <select id="tipo-entrada" class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
-                    <option value="general">General</option>
-                    <option value="vip">VIP</option>
+                    <option value="">Cargando tipos de entrada...</option>
                 </select>
             </div>
 
@@ -214,7 +217,8 @@
                 <div class="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center text-2xl font-bold text-zinc-950">NB</div>
                 <div>
                     <h2 class="text-2xl font-bold">Mi Perfil</h2>
-                    <p class="text-gray-400 text-sm">Estado de cuenta verificado</p>
+                    <p id="perfil-nombre" class="text-gray-200 text-sm"></p>
+                    <p id="perfil-correo" class="text-gray-400 text-xs"></p>
                 </div>
             </div>
             <button id="cerrar-sesion" class="text-sm font-bold text-red-400 hover:text-red-300 border border-red-800 bg-red-950/40 px-3 py-2 rounded cursor-pointer">Cerrar sesión</button>
@@ -431,8 +435,6 @@
 <script>
     // --- CONTROL DE ROL DE ADMINISTRADOR ---
     let esAdministrador = false;
-    const btnToggleAdmin = document.getElementById('toggle-admin');
-    const estadoRol = document.getElementById('estado-rol');
     const instruccionesMapa = document.getElementById('instrucciones-mapa');
     const btnLimpiarMapa = document.getElementById('btn-limpiar-mapa');
     const labelCargarMapa = document.getElementById('label-cargar-mapa');
@@ -457,19 +459,6 @@
         }
     }
 
-    function leerLocalStorage(key, fallback) {
-        try {
-            const valor = localStorage.getItem(key);
-            return valor ? JSON.parse(valor) : fallback;
-        } catch (error) {
-            return fallback;
-        }
-    }
-
-    function guardarLocalStorage(key, valor) {
-        localStorage.setItem(key, JSON.stringify(valor));
-    }
-
     function mostrarResultado(id, mensaje, tipo = 'success') {
         const elemento = document.getElementById(id);
         if (!elemento) return;
@@ -486,11 +475,34 @@
         elemento.classList.remove('hidden');
     }
 
+    localStorage.removeItem('festival_usuarios');
+    localStorage.removeItem('festival_sesion_actual');
+    let usuarioActual = null;
+
+    async function solicitarApi(ruta, opciones = {}) {
+        const respuesta = await fetch(ruta, {
+            ...opciones,
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                ...opciones.headers
+            }
+        });
+        const datos = respuesta.status === 204 ? null : await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(datos?.error || 'No se pudo completar la solicitud.');
+        }
+
+        return datos;
+    }
+
     function actualizarBotonesAuth() {
-        const usuarioActual = leerLocalStorage('festival_sesion_actual', null);
         const botonPerfil = document.getElementById('abrir-perfil');
         const botonLogin = document.getElementById('abrir-login');
         const botonRegistro = document.getElementById('abrir-modal');
+        const perfilNombre = document.getElementById('perfil-nombre');
+        const perfilCorreo = document.getElementById('perfil-correo');
 
         const estaAutenticado = Boolean(usuarioActual);
 
@@ -505,37 +517,45 @@
         if (botonRegistro) {
             botonRegistro.classList.toggle('hidden', estaAutenticado);
         }
+        if (perfilNombre) perfilNombre.textContent = usuarioActual?.nombre || '';
+        if (perfilCorreo) perfilCorreo.textContent = usuarioActual?.correo || '';
+        actualizarControlesAdmin();
     }
 
-    if (btnToggleAdmin) {
-        btnToggleAdmin.addEventListener('click', () => {
-            esAdministrador = !esAdministrador;
-            const btnAdminArtista = document.getElementById('btn-abrir-modal-artista');
+    function actualizarControlesAdmin() {
+        const esAdminAutorizado = usuarioActual?.rol === 'administrador';
+        const btnAdminArtista = document.getElementById('btn-abrir-modal-artista');
+
+        esAdministrador = esAdminAutorizado;
+
+        if (btnLimpiarMapa) btnLimpiarMapa.classList.toggle('!hidden', !esAdministrador);
+        if (labelCargarMapa) labelCargarMapa.classList.toggle('!hidden', !esAdministrador);
+        if (btnAdminArtista) btnAdminArtista.classList.toggle('!hidden', !esAdministrador);
+
+        if (subtextoPlaceholder && instruccionesMapa) {
             if (esAdministrador) {
-                estadoRol.innerText = "Activado (Admin)";
-                btnToggleAdmin.classList.replace('bg-zinc-800', 'bg-orange-600');
-                btnToggleAdmin.classList.replace('text-orange-400', 'text-zinc-950');
-
-                btnLimpiarMapa.classList.remove('!hidden');
-                labelCargarMapa.classList.remove('!hidden');
-                if (btnAdminArtista) btnAdminArtista.classList.remove('!hidden');
-
                 subtextoPlaceholder.innerText = "Haz clic en 'Cargar Imagen del Mapa' arriba para agregar una imagen.";
                 instruccionesMapa.innerHTML = '⚠️ <span class="text-orange-400 font-bold">Modo Administrador Activo:</span> Carga el mapa del recinto o haz clic sobre la imagen para <strong>crear/editar servicios</strong>.';
             } else {
-                estadoRol.innerText = "Apagado";
-                btnToggleAdmin.classList.replace('bg-orange-600', 'bg-zinc-800');
-                btnToggleAdmin.classList.replace('text-zinc-950', 'text-orange-400');
-
-                btnLimpiarMapa.classList.add('!hidden');
-                labelCargarMapa.classList.add('!hidden');
-                if (btnAdminArtista) btnAdminArtista.classList.add('!hidden');
-
-                subtextoPlaceholder.innerText = "El mapa oficial estará disponible próximamente.";
+                subtextoPlaceholder.innerText = 'El mapa oficial estará disponible próximamente.';
                 instruccionesMapa.innerHTML = 'ℹ️ <span class="text-gray-200">Modo Asistente:</span> Puedes ver todos los servicios oficiales activos en el mapa interactivo.';
             }
-            cargarServiciosGuardados();
-        });
+        }
+
+        cargarMapaYServicios();
+    }
+
+    async function sincronizarSesion() {
+        try {
+            const datos = await solicitarApi('/api/auth/me');
+            usuarioActual = datos.user;
+        } catch (error) {
+            if (!error.message.includes('Inicia sesión') && !error.message.includes('sesión expiró')) {
+                console.error('No se pudo verificar la sesión:', error);
+            }
+            usuarioActual = null;
+        }
+        actualizarBotonesAuth();
     }
 
     // --- LÓGICA DE INICIO DE SESIÓN Y REGISTRO ---
@@ -548,10 +568,10 @@
     const abrirModalRegistro = document.getElementById('abrir-modal');
     const cerrarModalRegistro = document.getElementById('cerrar-modal');
     const formularioRegistro = document.getElementById('formulario-registro');
+    const resultadoRegistro = document.getElementById('resultado-registro');
 
     if (abrirLogin) {
         abrirLogin.addEventListener('click', () => {
-            const usuarioActual = leerLocalStorage('festival_sesion_actual', null);
             if (usuarioActual) {
                 abrirModal('modal-perfil');
                 return;
@@ -571,32 +591,31 @@
     }
 
     if (formularioLogin) {
-        formularioLogin.addEventListener('submit', (e) => {
+        formularioLogin.addEventListener('submit', async (e) => {
             e.preventDefault();
             const correo = (document.getElementById('login-correo')?.value || '').trim().toLowerCase();
             const password = document.getElementById('login-password')?.value || '';
-            const usuarios = leerLocalStorage('festival_usuarios', []);
-            const usuario = usuarios.find((item) => item.correo.toLowerCase() === correo && item.password === password);
+            try {
+                const datos = await solicitarApi('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ correo, password })
+                });
+                usuarioActual = datos.user;
+                actualizarBotonesAuth();
+                mostrarResultado('resultado-login', `¡Bienvenido/a, ${usuarioActual.nombre}!`, 'success');
 
-            if (!usuario) {
-                mostrarResultado('resultado-login', 'Correo o contraseña incorrectos.', 'error');
-                return;
-            }
-
-            guardarLocalStorage('festival_sesion_actual', { nombre: usuario.nombre, correo: usuario.correo, id: usuario.id });
-            actualizarBotonesAuth();
-            mostrarResultado('resultado-login', `¡Bienvenido/a, ${usuario.nombre}!`, 'success');
-
-            setTimeout(() => {
+                setTimeout(() => {
                 cerrarModal('modal-login');
                 formularioLogin.reset();
-            }, 1200);
+                }, 1200);
+            } catch (error) {
+                mostrarResultado('resultado-login', error.message, 'error');
+            }
         });
     }
 
     if (abrirModalRegistro) {
         abrirModalRegistro.addEventListener('click', () => {
-            const usuarioActual = leerLocalStorage('festival_sesion_actual', null);
             if (usuarioActual) {
                 return;
             }
@@ -609,70 +628,56 @@
             cerrarModal('modal-registro');
             const resultadoId = document.getElementById('resultado-id');
             if (resultadoId) resultadoId.classList.add('hidden');
+            if (resultadoRegistro) resultadoRegistro.classList.add('hidden');
         });
     }
 
     if (formularioRegistro) {
-        formularioRegistro.addEventListener('submit', function(evento) {
+        formularioRegistro.addEventListener('submit', async function(evento) {
             evento.preventDefault();
 
             const nombre = (document.getElementById('nombre')?.value || '').trim();
+            const numIdentificacion = (document.getElementById('numero-identificacion')?.value || '').trim();
+            const telefono = (document.getElementById('telefono')?.value || '').trim();
             const correo = (document.getElementById('correo')?.value || '').trim().toLowerCase();
             const password = document.getElementById('password')?.value || '';
             const confirmarPassword = document.getElementById('confirmar-password')?.value || '';
-            const usuarios = leerLocalStorage('festival_usuarios', []);
 
-            if (!nombre || !correo || !password || !confirmarPassword) {
-                window.alert('Completa todos los campos del registro.');
+            if (password.length < 8) {
+                mostrarResultado('resultado-registro', 'La contraseña debe tener al menos 8 caracteres.', 'error');
                 return;
             }
-
-            if (password.length < 6) {
-                window.alert('La contraseña debe tener al menos 6 caracteres.');
-                return;
-            }
-
             if (password !== confirmarPassword) {
-                window.alert('Las contraseñas no coinciden.');
+                mostrarResultado('resultado-registro', 'Las contraseñas no coinciden.', 'error');
                 return;
             }
 
-            if (usuarios.some((usuario) => usuario.correo.toLowerCase() === correo)) {
-                window.alert('Este correo ya está registrado.');
-                return;
+            try {
+                const datos = await solicitarApi('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ nombre, numIdentificacion, telefono, correo, password })
+                });
+                usuarioActual = datos.user;
+                actualizarBotonesAuth();
+
+                const idGenerado = document.getElementById('id-generado');
+                const resultadoId = document.getElementById('resultado-id');
+                if (idGenerado) idGenerado.innerText = usuarioActual.attendeeCode;
+                if (resultadoId) resultadoId.classList.remove('hidden');
+                if (resultadoRegistro) resultadoRegistro.classList.add('hidden');
+                this.reset();
+
+                setTimeout(() => {
+                    cerrarModal('modal-registro');
+                    if (resultadoId) resultadoId.classList.add('hidden');
+                }, 1800);
+            } catch (error) {
+                mostrarResultado('resultado-registro', error.message, 'error');
             }
-
-            const idUnico = 'NB-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-            const usuarioNuevo = { nombre, correo, password, id: idUnico };
-            usuarios.push(usuarioNuevo);
-            guardarLocalStorage('festival_usuarios', usuarios);
-            guardarLocalStorage('festival_sesion_actual', { nombre: usuarioNuevo.nombre, correo: usuarioNuevo.correo, id: usuarioNuevo.id });
-            actualizarBotonesAuth();
-
-            const idGenerado = document.getElementById('id-generado');
-            const resultadoId = document.getElementById('resultado-id');
-            if (idGenerado) idGenerado.innerText = idUnico;
-            if (resultadoId) resultadoId.classList.remove('hidden');
-
-            let entradas = leerLocalStorage('entradas_usuario', []);
-            entradas.push({
-                titulo: 'Entrada General - Festival 2027',
-                fecha: '12-14 Feb 2027 • Parque Norte',
-                id: idUnico,
-                estado: 'Activo'
-            });
-            guardarLocalStorage('entradas_usuario', entradas);
-            cargarEntradasPerfil();
-            this.reset();
-
-            setTimeout(() => {
-                cerrarModal('modal-registro');
-                if (resultadoId) resultadoId.classList.add('hidden');
-            }, 1800);
         });
     }
 
-    actualizarBotonesAuth();
+    sincronizarSesion();
 
     // --- COMPRA DE ENTRADAS ---
     const modalCompra = document.getElementById('modal-compra');
@@ -683,16 +688,49 @@
     const precioCompra = document.getElementById('precio-compra');
     const formularioCompra = document.getElementById('formulario-compra');
     const resultadoCompra = document.getElementById('resultado-compra');
+    let tiposEntrada = [];
 
     function actualizarResumenCompra() {
-        const tipo = tipoEntrada?.value || 'general';
+        const tipoSeleccionado = tipoEntrada?.selectedOptions[0];
         const cantidad = Math.max(1, Number(cantidadEntrada?.value || 1));
-        const precioBase = tipo === 'vip' ? 220000 : 120000;
+        const precioBase = Number(tipoSeleccionado?.dataset.precio || 0);
         const total = precioBase * cantidad;
-        const label = tipo === 'vip' ? 'VIP' : 'General';
+        const label = tipoSeleccionado?.textContent || 'Sin tipos disponibles';
 
         if (resumenCompra) resumenCompra.textContent = `${cantidad} entrada${cantidad > 1 ? 's' : ''} ${label}`;
-        if (precioCompra) precioCompra.textContent = `$${total.toLocaleString('es-CO')} COP`;
+        if (precioCompra) {
+            precioCompra.textContent = precioBase > 0
+                ? `$${total.toLocaleString('es-CO')} COP`
+                : 'No hay tipos de entrada disponibles';
+        }
+        const botonConfirmar = formularioCompra?.querySelector('button[type="submit"]');
+        if (botonConfirmar) botonConfirmar.disabled = tiposEntrada.length === 0;
+    }
+
+    async function cargarTiposEntrada() {
+        if (!tipoEntrada) return;
+        tipoEntrada.innerHTML = '<option value="">Cargando tipos de entrada...</option>';
+        try {
+            const datos = await solicitarApi('/api/ticket-types');
+            tiposEntrada = datos.tipos;
+            tipoEntrada.replaceChildren();
+
+            if (tiposEntrada.length === 0) {
+                tipoEntrada.add(new Option('No hay tipos disponibles', ''));
+            } else {
+                tiposEntrada.forEach((tipo) => {
+                    const opcion = new Option(tipo.nombre, tipo.id);
+                    opcion.dataset.precio = String(tipo.precioCop);
+                    tipoEntrada.add(opcion);
+                });
+            }
+            actualizarResumenCompra();
+        } catch (error) {
+            tiposEntrada = [];
+            tipoEntrada.replaceChildren(new Option('No se pudieron cargar los tipos', ''));
+            actualizarResumenCompra();
+            mostrarResultado('resultado-compra', error.message, 'error');
+        }
     }
 
     function abrirCompraEntradas() {
@@ -711,44 +749,42 @@
     if (cantidadEntrada) cantidadEntrada.addEventListener('input', actualizarResumenCompra);
 
     if (formularioCompra) {
-        formularioCompra.addEventListener('submit', (e) => {
+        formularioCompra.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const tipo = tipoEntrada?.value || 'general';
+            const idTipoEntrada = tipoEntrada?.value || '';
             const cantidad = Math.max(1, Number(cantidadEntrada?.value || 1));
-            const usuarioActual = leerLocalStorage('festival_sesion_actual', null);
-            const precioBase = tipo === 'vip' ? 220000 : 120000;
-            const total = precioBase * cantidad;
-            const etiquetaTipo = tipo === 'vip' ? 'VIP' : 'General';
-            const idUnico = 'NB-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            try {
+                const comprador = usuarioActual || (await solicitarApi('/api/auth/me')).user;
+                const datos = await solicitarApi('/api/tickets', {
+                    method: 'POST',
+                    body: JSON.stringify({ idTipoEntrada, cantidad })
+                });
+                const nombreTipo = datos.tickets[0].tipo;
+                const mensaje = `¡Compra confirmada para ${comprador.nombre}! ${cantidad} entrada${cantidad > 1 ? 's' : ''} ${nombreTipo}. Total: $${datos.totalCop.toLocaleString('es-CO')} COP.`;
 
-            let entradas = leerLocalStorage('entradas_usuario', []);
-            entradas.push({
-                titulo: `${etiquetaTipo} - ${cantidad} entrada${cantidad > 1 ? 's' : ''}`,
-                fecha: '12-14 Feb 2027 • Parque Norte',
-                id: idUnico,
-                estado: 'Activo',
-                tipo: etiquetaTipo,
-                cantidad,
-                total
-            });
-            guardarLocalStorage('entradas_usuario', entradas);
-            cargarEntradasPerfil();
+                mostrarResultado('resultado-compra', mensaje, 'success');
+                await cargarEntradasPerfil();
+                formularioCompra.reset();
+                if (cantidadEntrada) cantidadEntrada.value = 1;
+                if (tipoEntrada && tiposEntrada.length > 0) tipoEntrada.value = tiposEntrada[0].id;
+                actualizarResumenCompra();
 
-            const mensaje = usuarioActual
-                ? `¡Compra confirmada para ${usuarioActual.nombre}! ${cantidad} entrada${cantidad > 1 ? 's' : ''} ${etiquetaTipo}. Total: $${total.toLocaleString('es-CO')} COP.`
-                : `¡Compra confirmada! ${cantidad} entrada${cantidad > 1 ? 's' : ''} ${etiquetaTipo}. Total: $${total.toLocaleString('es-CO')} COP.`;
-
-            mostrarResultado('resultado-compra', mensaje, 'success');
-            formularioCompra.reset();
-            if (cantidadEntrada) cantidadEntrada.value = 1;
-            if (tipoEntrada) tipoEntrada.value = 'general';
-            actualizarResumenCompra();
-
-            setTimeout(() => {
-                cerrarModal('modal-compra');
-            }, 1500);
+                setTimeout(() => {
+                    cerrarModal('modal-compra');
+                }, 1500);
+            } catch (error) {
+                mostrarResultado('resultado-compra', error.message, 'error');
+                if (error.message.includes('Inicia sesión') || error.message.includes('sesión expiró')) {
+                    setTimeout(() => {
+                        cerrarModal('modal-compra');
+                        abrirModal('modal-login');
+                    }, 1200);
+                }
+            }
         });
     }
+
+    cargarTiposEntrada();
 
     /// FILA VIRTUAL - HU 2
     const modalFila = document.getElementById('modal-fila');
@@ -829,42 +865,59 @@
     }
 
     if (btnCerrarSesion) {
-        btnCerrarSesion.addEventListener('click', () => {
-            localStorage.removeItem('festival_sesion_actual');
-            actualizarBotonesAuth();
-            cerrarModal('modal-perfil');
+        btnCerrarSesion.addEventListener('click', async () => {
+            try {
+                await solicitarApi('/api/auth/logout', { method: 'POST' });
+                usuarioActual = null;
+                actualizarBotonesAuth();
+                cerrarModal('modal-perfil');
+            } catch (error) {
+                console.error('No se pudo cerrar la sesión:', error);
+            }
         });
     }
 
-    function cargarEntradasPerfil() {
+    async function cargarEntradasPerfil() {
         const listaEntradas = document.getElementById('lista-entradas-perfil');
         if (!listaEntradas) return;
 
-        let entradas = JSON.parse(localStorage.getItem('entradas_usuario') || '[]');
-        if (entradas.length === 0) {
-            entradas = [
-                { titulo: 'Entrada General - Día 1', fecha: '12 Feb 2027 • Parque Norte', id: 'NB-9X82PL', estado: 'Activo' }
-            ];
-            localStorage.setItem('entradas_usuario', JSON.stringify(entradas));
-        }
-
         listaEntradas.innerHTML = '';
-        entradas.forEach(e => {
-            const div = document.createElement('div');
-            div.className = 'bg-zinc-950 p-4 rounded border border-zinc-800 flex justify-between items-center cursor-pointer hover:border-orange-500 transition-colors';
-            div.innerHTML = `
-                <div>
-                    <p class="font-bold text-orange-500 uppercase text-sm">${e.titulo}</p>
-                    <p class="text-xs text-gray-400 mt-1">${e.fecha} • ID: ${e.id}</p>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <span class="bg-green-500/20 text-green-500 text-xs px-3 py-1 rounded font-bold uppercase">${e.estado}</span>
-                    <span class="text-xs text-orange-400 font-bold underline">Ver QR ↗</span>
-                </div>
-            `;
-            div.addEventListener('click', () => abrirModalQR(e.titulo, e.fecha, e.id));
-            listaEntradas.appendChild(div);
-        });
+        try {
+            const datos = await solicitarApi('/api/tickets');
+            if (datos.tickets.length === 0) {
+                const vacio = document.createElement('p');
+                vacio.className = 'text-sm text-gray-400';
+                vacio.textContent = 'Aún no tienes entradas. Cuando realices una compra, aparecerá aquí.';
+                listaEntradas.appendChild(vacio);
+                return;
+            }
+
+            datos.tickets.forEach((entrada) => {
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'bg-zinc-950 p-4 rounded border border-zinc-800 flex justify-between items-center cursor-pointer hover:border-orange-500 transition-colors';
+
+                const detalle = document.createElement('div');
+                const titulo = document.createElement('p');
+                titulo.className = 'font-bold text-orange-500 uppercase text-sm';
+                titulo.textContent = entrada.titulo;
+                const fecha = document.createElement('p');
+                fecha.className = 'text-xs text-gray-400 mt-1';
+                fecha.textContent = `${entrada.fecha} • ID: ${entrada.codigo}`;
+                detalle.append(titulo, fecha);
+
+                const estado = document.createElement('span');
+                estado.className = 'bg-green-500/20 text-green-500 text-xs px-3 py-1 rounded font-bold uppercase';
+                estado.textContent = entrada.estado;
+                tarjeta.append(detalle, estado);
+                tarjeta.addEventListener('click', () => abrirModalQR(entrada.titulo, entrada.fecha, entrada.codigo));
+                listaEntradas.appendChild(tarjeta);
+            });
+        } catch (error) {
+            const aviso = document.createElement('p');
+            aviso.className = 'text-sm text-red-400';
+            aviso.textContent = error.message;
+            listaEntradas.appendChild(aviso);
+        }
     }
 
     // --- HU 8: MOSTRAR ENTRADA MEDIANTE CÓDIGO QR ---
@@ -891,75 +944,127 @@
     const formArtista = document.getElementById('form-artista');
     const gridLineup = document.getElementById('grid-lineup');
 
-    if (btnAbrirModalArtista) btnAbrirModalArtista.addEventListener('click', () => modalArtista.classList.remove('hidden'));
+    if (btnAbrirModalArtista) btnAbrirModalArtista.addEventListener('click', () => {
+        if (usuarioActual?.rol === 'administrador' && esAdministrador) {
+            modalArtista.classList.remove('hidden');
+        }
+    });
     const cerrarArtistaFn = () => modalArtista.classList.add('hidden');
     if (cerrarModalArtista) cerrarModalArtista.addEventListener('click', cerrarArtistaFn);
     if (btnCancelarArtista) btnCancelarArtista.addEventListener('click', cerrarArtistaFn);
 
     if (formArtista) {
-        formArtista.addEventListener('submit', (e) => {
+        formArtista.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (usuarioActual?.rol !== 'administrador' || !esAdministrador) return;
+
             const nombre = document.getElementById('artista-nombre').value;
             const genero = document.getElementById('artista-genero').value;
             const escenario = document.getElementById('artista-escenario').value;
             const horario = document.getElementById('artista-horario').value;
             const fotoInput = document.getElementById('artista-foto');
-
             const file = fotoInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const fotoBase64 = event.target.result;
-                    guardarYRenderizarArtista({ nombre, genero, escenario, horario, foto: fotoBase64 });
-                    formArtista.reset();
-                    modalArtista.classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
+
+            if (!file || file.size > 3 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+                window.alert('Selecciona una imagen PNG, JPG o WebP de máximo 3 MB.');
+                return;
+            }
+
+            try {
+                const foto = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = () => reject(new Error('No se pudo leer la imagen seleccionada.'));
+                    reader.readAsDataURL(file);
+                });
+                await solicitarApi('/api/admin/artists', {
+                    method: 'POST',
+                    body: JSON.stringify({ nombre, genero, escenario, horario, foto })
+                });
+                await cargarArtistasLineup();
+                formArtista.reset();
+                modalArtista.classList.add('hidden');
+            } catch (error) {
+                window.alert(error.message);
             }
         });
     }
 
-    function guardarYRenderizarArtista(artista) {
-        let artistas = JSON.parse(localStorage.getItem('artistas_festival') || '[]');
-        artistas.push(artista);
-        localStorage.setItem('artistas_festival', JSON.stringify(artistas));
-        cargarArtistasLineup();
-    }
-
-    function cargarArtistasLineup() {
+    async function cargarArtistasLineup() {
         if (!gridLineup) return;
-        let artistas = JSON.parse(localStorage.getItem('artistas_festival') || '[]');
+        try {
+            const datos = await solicitarApi('/api/artists');
+            gridLineup.replaceChildren();
 
-        if (artistas.length === 0) {
-            artistas = [
-                { nombre: 'Skrillex', genero: 'Dubstep / Electro', escenario: 'Escenario Principal - Tarima Norte', horario: '12 Feb • 23:00 hrs', foto: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=60' },
-                { nombre: 'Rezz', genero: 'Midtempo Bass', escenario: 'Bass Arena - Carpa 2', horario: '13 Feb • 22:00 hrs', foto: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&auto=format&fit=crop&q=60' }
-            ];
-            localStorage.setItem('artistas_festival', JSON.stringify(artistas));
+            if (datos.artistas.length === 0) {
+                const vacio = document.createElement('p');
+                vacio.className = 'text-gray-400 text-sm';
+                vacio.textContent = 'Próximamente anunciaremos a los artistas.';
+                gridLineup.appendChild(vacio);
+                return;
+            }
+
+            datos.artistas.forEach((artista) => {
+                const card = document.createElement('article');
+                card.className = 'bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800 hover:border-orange-500 transition-all group';
+
+                const imageContainer = document.createElement('div');
+                imageContainer.className = 'h-48 overflow-hidden relative bg-zinc-800';
+                if (artista.foto) {
+                    const image = document.createElement('img');
+                    image.src = artista.foto;
+                    image.alt = artista.nombre;
+                    image.className = 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-300';
+                    imageContainer.appendChild(image);
+                }
+
+                const genre = document.createElement('span');
+                genre.className = 'absolute top-3 right-3 bg-zinc-950/80 text-orange-400 text-xs px-2.5 py-1 rounded font-bold uppercase border border-orange-500/30';
+                genre.textContent = artista.genero;
+                imageContainer.appendChild(genre);
+
+                const details = document.createElement('div');
+                details.className = 'p-6';
+                const name = document.createElement('h3');
+                name.className = 'text-xl font-bold text-white mb-1';
+                name.textContent = artista.nombre;
+                const stage = document.createElement('p');
+                stage.className = 'text-xs text-orange-500 font-semibold mb-2';
+                stage.textContent = `📍 ${artista.escenario}`;
+                const schedule = document.createElement('p');
+                schedule.className = 'text-xs text-gray-400';
+                schedule.textContent = `🕒 ${artista.horario}`;
+                details.append(name, stage, schedule);
+
+                if (esAdministrador && usuarioActual?.rol === 'administrador') {
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.className = 'mt-4 text-xs text-red-400 hover:text-red-300 underline';
+                    deleteButton.textContent = 'Eliminar artista';
+                    deleteButton.addEventListener('click', async () => {
+                        if (!window.confirm(`¿Eliminar a ${artista.nombre}?`)) return;
+                        try {
+                            await solicitarApi(`/api/admin/artists/${encodeURIComponent(artista.id)}`, { method: 'DELETE' });
+                            await cargarArtistasLineup();
+                        } catch (error) {
+                            window.alert(error.message);
+                        }
+                    });
+                    details.appendChild(deleteButton);
+                }
+
+                card.append(imageContainer, details);
+                gridLineup.appendChild(card);
+            });
+        } catch (error) {
+            console.error('No se pudo cargar el lineup:', error);
+            gridLineup.textContent = 'No se pudo cargar el lineup.';
         }
-
-        gridLineup.innerHTML = '';
-        artistas.forEach(a => {
-            const card = document.createElement('div');
-            card.className = 'bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800 hover:border-orange-500 transition-all group';
-            card.innerHTML = `
-                <div class="h-48 overflow-hidden relative">
-                    <img src="${a.foto}" alt="${a.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                    <span class="absolute top-3 right-3 bg-zinc-950/80 text-orange-400 text-xs px-2.5 py-1 rounded font-bold uppercase border border-orange-500/30">${a.genero}</span>
-                </div>
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-white mb-1">${a.nombre}</h3>
-                    <p class="text-xs text-orange-500 font-semibold mb-2">📍 ${a.escenario}</p>
-                    <p class="text-xs text-gray-400">🕒 ${a.horario}</p>
-                </div>
-            `;
-            gridLineup.appendChild(card);
-        });
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        cargarEntradasPerfil();
         cargarArtistasLineup();
+        cargarMapaYServicios();
     });
 
     // --- GESTIÓN DE MAPA Y SERVICIOS ---
@@ -979,21 +1084,41 @@
     const placeholderMapa = document.getElementById('placeholder-mapa');
 
     let clickCoords = { x: 0, y: 0 };
+    let serviciosMapa = [];
 
-    inputMapa.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const base64Image = event.target.result;
-                localStorage.setItem('mapa_festival_img', base64Image);
-                mostrarImagenMapa(base64Image);
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+    if (inputMapa) {
+        inputMapa.addEventListener('change', async (e) => {
+            if (usuarioActual?.rol !== 'administrador' || !esAdministrador) return;
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 3 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+                window.alert('Selecciona una imagen PNG, JPG o WebP de máximo 3 MB.');
+                inputMapa.value = '';
+                return;
+            }
+
+            try {
+                const imagen = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = () => reject(new Error('No se pudo leer la imagen del mapa.'));
+                    reader.readAsDataURL(file);
+                });
+                await solicitarApi('/api/admin/map', {
+                    method: 'PUT',
+                    body: JSON.stringify({ imagen })
+                });
+                mostrarImagenMapa(imagen);
+            } catch (error) {
+                window.alert(error.message);
+            } finally {
+                inputMapa.value = '';
+            }
+        });
+    }
 
     function mostrarImagenMapa(src) {
+        if (!imagenMapa || !placeholderMapa || !contenedorMapa) return;
         imagenMapa.src = src;
         imagenMapa.classList.remove('hidden');
         placeholderMapa.classList.add('hidden');
@@ -1001,130 +1126,166 @@
     }
 
     function ocultarImagenMapa() {
+        if (!imagenMapa || !placeholderMapa || !contenedorMapa) return;
         imagenMapa.removeAttribute('src');
         imagenMapa.classList.add('hidden');
         placeholderMapa.classList.remove('hidden');
         contenedorMapa.classList.add('border-2', 'border-dashed');
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-        const mapaGuardado = localStorage.getItem('mapa_festival_img');
-        if (mapaGuardado) {
-            mostrarImagenMapa(mapaGuardado);
-        } else {
-            ocultarImagenMapa();
+    async function cargarMapaYServicios() {
+        try {
+            const datos = await solicitarApi('/api/map');
+            if (datos.imagen) {
+                mostrarImagenMapa(datos.imagen);
+            } else {
+                ocultarImagenMapa();
+            }
+            serviciosMapa = datos.servicios;
+            renderizarServiciosMapa();
+        } catch (error) {
+            console.error('No se pudo cargar el mapa:', error);
         }
-        cargarServiciosGuardados();
-    });
+    }
 
-    contenedorMapa.addEventListener('click', (e) => {
-        if (!esAdministrador) return;
-        if (e.target.closest('.pin-element')) return;
+    if (contenedorMapa) {
+        contenedorMapa.addEventListener('click', (e) => {
+            if (!esAdministrador || usuarioActual?.rol !== 'administrador') return;
+            if (e.target.closest('.pin-element')) return;
 
-        const rect = contenedorMapa.getBoundingClientRect();
-        clickCoords = {
-            x: ((e.clientX - rect.left) / rect.width) * 100,
-            y: ((e.clientY - rect.top) / rect.height) * 100
-        };
+            const rect = contenedorMapa.getBoundingClientRect();
+            clickCoords = {
+                x: ((e.clientX - rect.left) / rect.width) * 100,
+                y: ((e.clientY - rect.top) / rect.height) * 100
+            };
 
-        inputIndiceServicio.value = "";
-        inputTipo.value = "💧 Puntos de hidratación";
-        inputDesc.value = "";
-        tituloModalAdmin.innerText = "⚙️ [ADMIN] Crear Servicio en el Mapa";
-        btnEliminarServicio.classList.add('hidden');
-
-        modalMarcador.classList.remove('hidden');
-    });
+            inputIndiceServicio.value = '';
+            inputTipo.value = '💧 Puntos de hidratación';
+            inputDesc.value = '';
+            tituloModalAdmin.innerText = '⚙️ [ADMIN] Crear Servicio en el Mapa';
+            btnEliminarServicio.classList.add('hidden');
+            modalMarcador.classList.remove('hidden');
+        });
+    }
 
     const cerrarModalAdmin = () => modalMarcador.classList.add('hidden');
-    btnCancelarMarcador.addEventListener('click', cerrarModalAdmin);
-    btnCancelModal.addEventListener('click', cerrarModalAdmin);
+    if (btnCancelarMarcador) btnCancelarMarcador.addEventListener('click', cerrarModalAdmin);
+    if (btnCancelModal) btnCancelModal.addEventListener('click', cerrarModalAdmin);
 
-    formMarcador.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const tipo = inputTipo.value;
-        const descripcion = inputDesc.value;
-        const index = inputIndiceServicio.value;
+    if (formMarcador) {
+        formMarcador.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!esAdministrador || usuarioActual?.rol !== 'administrador') return;
 
-        let servicios = JSON.parse(localStorage.getItem('servicios_festival') || '[]');
-
-        if (index === "") {
-            const nuevoServicio = { x: clickCoords.x, y: clickCoords.y, tipo, descripcion };
-            servicios.push(nuevoServicio);
-        } else {
-            servicios[index].tipo = tipo;
-            servicios[index].descripcion = descripcion;
-        }
-
-        localStorage.setItem('servicios_festival', JSON.stringify(servicios));
-        cargarServiciosGuardados();
-        modalMarcador.classList.add('hidden');
-    });
-
-    btnEliminarServicio.addEventListener('click', () => {
-    const index = inputIndiceServicio.value;
-    if (index !== "") {
-        // Ventana de confirmación de seguridad
-        if (confirm("¿Está seguro de que desea eliminar este servicio?")) {
-            let servicios = JSON.parse(localStorage.getItem('servicios_festival') || '[]');
-            servicios.splice(index, 1);
-            localStorage.setItem('servicios_festival', JSON.stringify(servicios));
-            cargarServiciosGuardados();
-            modalMarcador.classList.add('hidden');
-        }
-    }
-});
-
-    function cargarServiciosGuardados() {
-        capaPines.innerHTML = '';
-        let servicios = JSON.parse(localStorage.getItem('servicios_festival') || '[]');
-        servicios.forEach((s, idx) => renderizarPin(s, idx));
+            const tipo = inputTipo.value;
+            const descripcion = inputDesc.value.trim();
+            const id = inputIndiceServicio.value;
+            const payload = { ...clickCoords, tipo, descripcion };
+            try {
+                if (id === '') {
+                    await solicitarApi('/api/admin/services', {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    await solicitarApi(`/api/admin/services/${encodeURIComponent(id)}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ tipo, descripcion })
+                    });
+                }
+                await cargarMapaYServicios();
+                cerrarModalAdmin();
+            } catch (error) {
+                window.alert(error.message);
+            }
+        });
     }
 
-    function renderizarPin(s, idx) {
+    if (btnEliminarServicio) {
+        btnEliminarServicio.addEventListener('click', async () => {
+            const id = inputIndiceServicio.value;
+            if (!id || !esAdministrador || usuarioActual?.rol !== 'administrador') return;
+            if (!window.confirm('¿Está seguro de que desea eliminar este servicio?')) return;
+
+            try {
+                await solicitarApi(`/api/admin/services/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                await cargarMapaYServicios();
+                cerrarModalAdmin();
+            } catch (error) {
+                window.alert(error.message);
+            }
+        });
+    }
+
+    function renderizarServiciosMapa() {
+        if (!capaPines) return;
+        capaPines.replaceChildren();
+        serviciosMapa.forEach(renderizarPin);
+    }
+
+    function renderizarPin(servicio) {
         const pin = document.createElement('div');
         pin.className = 'absolute pin-marker pin-element pointer-events-auto cursor-pointer group flex flex-col items-center';
-        pin.style.left = `${s.x}%`;
-        pin.style.top = `${s.y}%`;
+        pin.style.left = `${servicio.x}%`;
+        pin.style.top = `${servicio.y}%`;
 
-        pin.innerHTML = `
-            <div class="bg-orange-600 text-white font-bold p-2 rounded-full shadow-lg text-sm transform transition-transform group-hover:scale-125 border border-white flex items-center justify-center">
-                ${s.tipo.split(' ')[0]}
-            </div>
-            <div class="hidden group-hover:flex flex-col items-center absolute bottom-full mb-2 z-30 pointer-events-none">
-                <div class="bg-zinc-950 border border-orange-500 text-white text-xs p-2 rounded shadow-xl whitespace-nowrap">
-                    <p class="font-bold text-orange-500">${s.tipo}</p>
-                    <p class="text-gray-300">${s.descripcion}</p>
-                    ${esAdministrador ? '<p class="text-[10px] text-orange-400 mt-1">🖱️ Clic para editar/eliminar</p>' : ''}
-                </div>
-            </div>
-        `;
+        const icono = document.createElement('div');
+        icono.className = 'bg-orange-600 text-white font-bold p-2 rounded-full shadow-lg text-sm transform transition-transform group-hover:scale-125 border border-white flex items-center justify-center';
+        icono.textContent = servicio.tipo.split(' ')[0];
 
+        const tooltip = document.createElement('div');
+        tooltip.className = 'hidden group-hover:flex flex-col items-center absolute bottom-full mb-2 z-30 pointer-events-none';
+        const contenido = document.createElement('div');
+        contenido.className = 'bg-zinc-950 border border-orange-500 text-white text-xs p-2 rounded shadow-xl whitespace-nowrap';
+        const tipo = document.createElement('p');
+        tipo.className = 'font-bold text-orange-500';
+        tipo.textContent = servicio.tipo;
+        const descripcion = document.createElement('p');
+        descripcion.className = 'text-gray-300';
+        descripcion.textContent = servicio.descripcion;
+        contenido.append(tipo, descripcion);
+
+        if (esAdministrador && usuarioActual?.rol === 'administrador') {
+            const indicacion = document.createElement('p');
+            indicacion.className = 'text-[10px] text-orange-400 mt-1';
+            indicacion.textContent = '🖱️ Clic para editar/eliminar';
+            contenido.appendChild(indicacion);
+        }
+
+        tooltip.appendChild(contenido);
+        pin.append(icono, tooltip);
         pin.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (!esAdministrador) return;
+            if (!esAdministrador || usuarioActual?.rol !== 'administrador') return;
 
-            inputIndiceServicio.value = idx;
-            inputTipo.value = s.tipo;
-            inputDesc.value = s.descripcion;
-            tituloModalAdmin.innerText = "⚙️ [ADMIN] Actualizar o Eliminar Servicio";
+            clickCoords = { x: servicio.x, y: servicio.y };
+            inputIndiceServicio.value = String(servicio.id);
+            inputTipo.value = servicio.tipo;
+            inputDesc.value = servicio.descripcion;
+            tituloModalAdmin.innerText = '⚙️ [ADMIN] Actualizar o Eliminar Servicio';
             btnEliminarServicio.classList.remove('hidden');
-
             modalMarcador.classList.remove('hidden');
         });
 
         capaPines.appendChild(pin);
     }
 
-    btnLimpiarMapa.addEventListener('click', () => {
-        if (confirm("¿Estás seguro de eliminar la imagen del mapa y TODOS los servicios creados?")) {
-            localStorage.removeItem('mapa_festival_img');
-            localStorage.removeItem('servicios_festival');
-            capaPines.innerHTML = '';
-            inputMapa.value = '';
-            ocultarImagenMapa();
-        }
-    });
+    if (btnLimpiarMapa) {
+        btnLimpiarMapa.addEventListener('click', async () => {
+            if (!esAdministrador || usuarioActual?.rol !== 'administrador') return;
+            if (!window.confirm('¿Estás seguro de eliminar la imagen del mapa y TODOS los servicios creados?')) return;
+            try {
+                await solicitarApi('/api/admin/map', { method: 'DELETE' });
+                serviciosMapa = [];
+                renderizarServiciosMapa();
+                if (inputMapa) inputMapa.value = '';
+                ocultarImagenMapa();
+            } catch (error) {
+                window.alert(error.message);
+            }
+        });
+    }
+
 </script>
 
 </body>
