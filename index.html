@@ -318,7 +318,9 @@
                 <select id="tipo-marcador" class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
                     <option value="💧 Puntos de hidratación">💧 Puntos de hidratación</option>
                     <option value="🚻 Baños">🚻 Baños</option>
+                    <option value="♿ Baños adaptados">♿ Baños adaptados</option>
                     <option value="♿ Rampas">♿ Rampas y Accesibilidad</option>
+                    <option value="♿ Rutas accesibles">♿ Rutas accesibles</option>
                     <option value="🚑 Puestos médicos">🚑 Puestos médicos</option>
                     <option value="🍔 Comidas y Bebidas">🍔 Comidas y Bebidas</option>
                     <option value="🎶 Escenario Principal">🎶 Escenario Principal</option>
@@ -382,7 +384,10 @@
                 <span class="text-orange-500 font-bold text-xs tracking-widest uppercase">Panel Interactivo del Festival</span>
                 <h2 class="text-4xl font-extrabold mt-1">MAPA Y SERVICIOS</h2>
             </div>
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-3">
+                <button id="btn-ruta-accesible" class="!hidden bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-2 rounded text-xs font-bold border border-zinc-700 cursor-pointer">
+                    ♿ Dibujar ruta accesible
+                </button>
                 <button id="btn-limpiar-mapa" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800 px-3 py-2 rounded text-xs font-bold transition-colors !hidden cursor-pointer">
                     🗑️ Eliminar Mapa y Servicios (Admin)
                 </button>
@@ -403,8 +408,31 @@
                 <p class="text-gray-400 font-bold">No hay un mapa cargado aún.</p>
                 <p id="subtexto-placeholder" class="text-gray-600 text-xs mt-1">Haz clic en 'Cargar Imagen del Mapa' arriba para agregar una imagen.</p>
             </div>
-            <img id="imagen-mapa" class="w-full h-full object-contain hidden select-none p-2" alt="Mapa del festival">
+            <img id="imagen-mapa" class="w-full h-full object-contain hidden select-none" alt="Mapa del festival">
             <div id="capa-pines" class="absolute inset-0 pointer-events-none"></div>
+        </div>
+        <div class="max-w-4xl mx-auto mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p class="text-gray-400 text-sm">Ubicación del festival: Parque Norte, Medellín.</p>
+            <a href="https://www.google.com/maps/search/?api=1&amp;query=Parque+Norte+Medell%C3%ADn"
+               target="_blank" rel="noopener noreferrer"
+               class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded text-sm font-bold border border-zinc-700">
+                📍 Ver ubicación y cómo llegar
+            </a>
+        </div>
+    </section>
+
+    <section id="avisos" class="py-16 border-t border-zinc-800">
+        <div class="mb-8 flex flex-wrap justify-between items-end gap-4">
+            <div>
+                <span class="text-orange-500 font-bold text-xs tracking-widest uppercase">Información oficial</span>
+                <h2 class="text-4xl font-extrabold mt-1">AVISOS Y ÚLTIMA HORA</h2>
+            </div>
+            <button id="btn-crear-aviso" class="!hidden bg-orange-600 hover:bg-orange-500 text-zinc-950 px-4 py-2 font-bold rounded text-sm">
+                + Publicar aviso
+            </button>
+        </div>
+        <div id="lista-avisos" class="grid grid-cols-1 md:grid-cols-2 gap-4" aria-live="polite">
+            <p class="text-gray-400 text-sm">Cargando avisos oficiales...</p>
         </div>
     </section>
 
@@ -432,11 +460,48 @@
     </section>
 </main>
 
+<div id="modal-aviso" class="fixed inset-0 bg-black/80 hidden flex justify-center items-center z-50">
+    <div class="max-w-lg w-11/12 bg-zinc-900 p-6 rounded-lg border border-orange-500">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="titulo-modal-aviso" class="text-xl font-bold text-orange-500">Publicar aviso oficial</h3>
+            <button id="cerrar-modal-aviso" type="button" class="text-gray-400 hover:text-white font-bold text-xl" aria-label="Cerrar">✕</button>
+        </div>
+        <form id="form-aviso" class="space-y-4">
+            <input id="aviso-id" type="hidden">
+            <div>
+                <label for="aviso-categoria" class="block text-xs font-bold text-gray-400 mb-1 uppercase">Categoría</label>
+                <select id="aviso-categoria" required class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded">
+                    <option>Información</option>
+                    <option>Última hora</option>
+                    <option>Accesibilidad</option>
+                </select>
+            </div>
+            <div>
+                <label for="aviso-titulo" class="block text-xs font-bold text-gray-400 mb-1 uppercase">Título</label>
+                <input id="aviso-titulo" maxlength="120" required class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded">
+            </div>
+            <div>
+                <label for="aviso-mensaje" class="block text-xs font-bold text-gray-400 mb-1 uppercase">Mensaje</label>
+                <textarea id="aviso-mensaje" maxlength="1000" rows="4" required class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded"></textarea>
+            </div>
+            <div class="flex justify-between gap-3">
+                <button id="btn-eliminar-aviso" type="button" class="hidden bg-red-950/60 text-red-400 border border-red-800 px-4 py-2 rounded text-sm font-bold">Eliminar</button>
+                <div class="flex gap-3 ml-auto">
+                    <button id="btn-cancelar-aviso" type="button" class="px-4 py-2 text-sm font-bold text-gray-400">Cancelar</button>
+                    <button type="submit" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-6 py-2 font-bold rounded-sm text-sm">Guardar aviso</button>
+                </div>
+            </div>
+            <p id="resultado-aviso" class="hidden text-sm text-red-400" role="alert"></p>
+        </form>
+    </div>
+</div>
+
 <script>
     // --- CONTROL DE ROL DE ADMINISTRADOR ---
     let esAdministrador = false;
     const instruccionesMapa = document.getElementById('instrucciones-mapa');
     const btnLimpiarMapa = document.getElementById('btn-limpiar-mapa');
+    const btnDibujarRuta = document.getElementById('btn-ruta-accesible');
     const labelCargarMapa = document.getElementById('label-cargar-mapa');
     const subtextoPlaceholder = document.getElementById('subtexto-placeholder');
 
@@ -525,17 +590,20 @@
     function actualizarControlesAdmin() {
         const esAdminAutorizado = usuarioActual?.rol === 'administrador';
         const btnAdminArtista = document.getElementById('btn-abrir-modal-artista');
+        const btnCrearAviso = document.getElementById('btn-crear-aviso');
 
         esAdministrador = esAdminAutorizado;
 
         if (btnLimpiarMapa) btnLimpiarMapa.classList.toggle('!hidden', !esAdministrador);
+        if (btnDibujarRuta) btnDibujarRuta.classList.toggle('!hidden', !esAdministrador);
         if (labelCargarMapa) labelCargarMapa.classList.toggle('!hidden', !esAdministrador);
         if (btnAdminArtista) btnAdminArtista.classList.toggle('!hidden', !esAdministrador);
+        if (btnCrearAviso) btnCrearAviso.classList.toggle('!hidden', !esAdministrador);
 
         if (subtextoPlaceholder && instruccionesMapa) {
             if (esAdministrador) {
                 subtextoPlaceholder.innerText = "Haz clic en 'Cargar Imagen del Mapa' arriba para agregar una imagen.";
-                instruccionesMapa.innerHTML = '⚠️ <span class="text-orange-400 font-bold">Modo Administrador Activo:</span> Carga el mapa del recinto o haz clic sobre la imagen para <strong>crear/editar servicios</strong>.';
+                instruccionesMapa.innerHTML = '⚠️ <span class="text-orange-400 font-bold">Modo Administrador:</span> Carga el plano y haz clic en él para agregar servicios. Usa “Dibujar ruta accesible” y marca dos puntos para trazar una ruta.';
             } else {
                 subtextoPlaceholder.innerText = 'El mapa oficial estará disponible próximamente.';
                 instruccionesMapa.innerHTML = 'ℹ️ <span class="text-gray-200">Modo Asistente:</span> Puedes ver todos los servicios oficiales activos en el mapa interactivo.';
@@ -1065,11 +1133,135 @@
     window.addEventListener('DOMContentLoaded', () => {
         cargarArtistasLineup();
         cargarMapaYServicios();
+        cargarAvisos();
     });
+
+    const btnCrearAviso = document.getElementById('btn-crear-aviso');
+    const formAviso = document.getElementById('form-aviso');
+    const avisoId = document.getElementById('aviso-id');
+    const avisoCategoria = document.getElementById('aviso-categoria');
+    const avisoTitulo = document.getElementById('aviso-titulo');
+    const avisoMensaje = document.getElementById('aviso-mensaje');
+    const btnEliminarAviso = document.getElementById('btn-eliminar-aviso');
+    const resultadoAviso = document.getElementById('resultado-aviso');
+
+    function cerrarModalAviso() {
+        cerrarModal('modal-aviso');
+        formAviso.reset();
+        avisoId.value = '';
+        btnEliminarAviso.classList.add('hidden');
+        resultadoAviso.classList.add('hidden');
+    }
+
+    function abrirEditorAviso(aviso = null) {
+        if (usuarioActual?.rol !== 'administrador') return;
+        formAviso.reset();
+        resultadoAviso.classList.add('hidden');
+        avisoId.value = aviso ? String(aviso.id) : '';
+        avisoCategoria.value = aviso?.categoria || 'Información';
+        avisoTitulo.value = aviso?.titulo || '';
+        avisoMensaje.value = aviso?.mensaje || '';
+        btnEliminarAviso.classList.toggle('hidden', !aviso);
+        document.getElementById('titulo-modal-aviso').textContent = aviso ? 'Editar aviso oficial' : 'Publicar aviso oficial';
+        abrirModal('modal-aviso');
+    }
+
+    if (btnCrearAviso) btnCrearAviso.addEventListener('click', () => abrirEditorAviso());
+    document.getElementById('cerrar-modal-aviso').addEventListener('click', cerrarModalAviso);
+    document.getElementById('btn-cancelar-aviso').addEventListener('click', cerrarModalAviso);
+
+    if (formAviso) {
+        formAviso.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (usuarioActual?.rol !== 'administrador') return;
+            const id = avisoId.value;
+            const payload = {
+                categoria: avisoCategoria.value,
+                titulo: avisoTitulo.value.trim(),
+                mensaje: avisoMensaje.value.trim()
+            };
+            try {
+                await solicitarApi(id ? `/api/admin/announcements/${encodeURIComponent(id)}` : '/api/admin/announcements', {
+                    method: id ? 'PUT' : 'POST',
+                    body: JSON.stringify(payload)
+                });
+                cerrarModalAviso();
+                await cargarAvisos();
+            } catch (error) {
+                resultadoAviso.textContent = error.message;
+                resultadoAviso.classList.remove('hidden');
+            }
+        });
+    }
+
+    if (btnEliminarAviso) {
+        btnEliminarAviso.addEventListener('click', async () => {
+            if (usuarioActual?.rol !== 'administrador' || !avisoId.value) return;
+            if (!window.confirm('¿Eliminar este aviso oficial?')) return;
+            try {
+                await solicitarApi(`/api/admin/announcements/${encodeURIComponent(avisoId.value)}`, { method: 'DELETE' });
+                cerrarModalAviso();
+                await cargarAvisos();
+            } catch (error) {
+                resultadoAviso.textContent = error.message;
+                resultadoAviso.classList.remove('hidden');
+            }
+        });
+    }
+
+    async function cargarAvisos() {
+        const listaAvisos = document.getElementById('lista-avisos');
+        if (!listaAvisos) return;
+        try {
+            const datos = await solicitarApi('/api/announcements');
+            listaAvisos.replaceChildren();
+            if (datos.avisos.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'text-gray-400 text-sm';
+                empty.textContent = 'No hay avisos oficiales por el momento.';
+                listaAvisos.appendChild(empty);
+                return;
+            }
+
+            datos.avisos.forEach((aviso) => {
+                const card = document.createElement('article');
+                card.className = 'bg-zinc-900 p-5 rounded-lg border border-zinc-800';
+                const category = document.createElement('p');
+                category.className = 'text-orange-500 text-xs font-bold uppercase tracking-widest';
+                category.textContent = aviso.categoria;
+                const title = document.createElement('h3');
+                title.className = 'text-lg font-bold mt-2';
+                title.textContent = aviso.titulo;
+                const message = document.createElement('p');
+                message.className = 'text-gray-300 text-sm mt-2 whitespace-pre-wrap';
+                message.textContent = aviso.mensaje;
+                const date = document.createElement('p');
+                date.className = 'text-gray-500 text-xs mt-4';
+                date.textContent = new Date(aviso.creadoEn).toLocaleString('es-CO', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                });
+                card.append(category, title, message, date);
+                if (usuarioActual?.rol === 'administrador') {
+                    const edit = document.createElement('button');
+                    edit.type = 'button';
+                    edit.className = 'mt-4 text-sm text-orange-400 hover:text-orange-300 font-bold';
+                    edit.textContent = 'Editar aviso';
+                    edit.addEventListener('click', () => abrirEditorAviso(aviso));
+                    card.appendChild(edit);
+                }
+                listaAvisos.appendChild(card);
+            });
+        } catch (error) {
+            console.error('No se pudieron cargar los avisos oficiales:', error);
+            listaAvisos.textContent = 'No se pudieron cargar los avisos oficiales.';
+        }
+    }
 
     // --- GESTIÓN DE MAPA Y SERVICIOS ---
     const contenedorMapa = document.getElementById('contenedor-mapa');
     const capaPines = document.getElementById('capa-pines');
+    const btnRutaAccesible = document.getElementById('btn-ruta-accesible');
     const modalMarcador = document.getElementById('modal-marcador');
     const formMarcador = document.getElementById('form-marcador');
     const btnCancelarMarcador = document.getElementById('cancelar-marcador');
@@ -1084,7 +1276,52 @@
     const placeholderMapa = document.getElementById('placeholder-mapa');
 
     let clickCoords = { x: 0, y: 0 };
+    let modoDibujarRuta = false;
+    let inicioRuta = null;
     let serviciosMapa = [];
+
+    function ajustarCapaMapa() {
+        if (!imagenMapa || !capaPines || imagenMapa.classList.contains('hidden')
+            || !imagenMapa.naturalWidth || !imagenMapa.naturalHeight) return;
+
+        const rect = imagenMapa.getBoundingClientRect();
+        const imageRatio = imagenMapa.naturalWidth / imagenMapa.naturalHeight;
+        const containerRatio = rect.width / rect.height;
+        let width = rect.width;
+        let height = rect.height;
+        let left = 0;
+        let top = 0;
+
+        if (imageRatio > containerRatio) {
+            height = width / imageRatio;
+            top = (rect.height - height) / 2;
+        } else {
+            width = height * imageRatio;
+            left = (rect.width - width) / 2;
+        }
+
+        capaPines.style.left = `${left}px`;
+        capaPines.style.top = `${top}px`;
+        capaPines.style.width = `${width}px`;
+        capaPines.style.height = `${height}px`;
+    }
+
+    imagenMapa.addEventListener('load', ajustarCapaMapa);
+    window.addEventListener('resize', ajustarCapaMapa);
+
+    if (btnRutaAccesible) {
+        btnRutaAccesible.addEventListener('click', () => {
+            if (!esAdministrador || usuarioActual?.rol !== 'administrador') return;
+            if (imagenMapa.classList.contains('hidden')) {
+                window.alert('Primero carga el plano del recinto.');
+                return;
+            }
+            modoDibujarRuta = true;
+            inicioRuta = null;
+            btnRutaAccesible.textContent = 'Selecciona el inicio en el mapa…';
+            instruccionesMapa.textContent = 'Selecciona dos puntos sobre el plano para trazar una ruta accesible.';
+        });
+    }
 
     if (inputMapa) {
         inputMapa.addEventListener('change', async (e) => {
@@ -1123,6 +1360,7 @@
         imagenMapa.classList.remove('hidden');
         placeholderMapa.classList.add('hidden');
         contenedorMapa.classList.remove('border-2', 'border-dashed');
+        ajustarCapaMapa();
     }
 
     function ocultarImagenMapa() {
@@ -1153,12 +1391,38 @@
             if (!esAdministrador || usuarioActual?.rol !== 'administrador') return;
             if (e.target.closest('.pin-element')) return;
 
-            const rect = contenedorMapa.getBoundingClientRect();
-            clickCoords = {
+            if (imagenMapa.classList.contains('hidden')) {
+                window.alert('Primero carga el plano del recinto.');
+                return;
+            }
+            const rect = capaPines.getBoundingClientRect();
+            if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
+            const punto = {
                 x: ((e.clientX - rect.left) / rect.width) * 100,
                 y: ((e.clientY - rect.top) / rect.height) * 100
             };
 
+            if (modoDibujarRuta) {
+                if (!inicioRuta) {
+                    inicioRuta = punto;
+                    btnRutaAccesible.textContent = 'Selecciona el final en el mapa…';
+                    instruccionesMapa.textContent = 'Ahora selecciona el punto final de la ruta accesible.';
+                    return;
+                }
+                clickCoords = { ...inicioRuta, xFin: punto.x, yFin: punto.y };
+                modoDibujarRuta = false;
+                inicioRuta = null;
+                btnRutaAccesible.textContent = '♿ Dibujar ruta accesible';
+                inputTipo.value = '♿ Rutas accesibles';
+                inputIndiceServicio.value = '';
+                inputDesc.value = '';
+                tituloModalAdmin.innerText = '⚙️ [ADMIN] Crear Ruta Accesible';
+                btnEliminarServicio.classList.add('hidden');
+                modalMarcador.classList.remove('hidden');
+                return;
+            }
+
+            clickCoords = { ...punto, xFin: null, yFin: null };
             inputIndiceServicio.value = '';
             inputTipo.value = '💧 Puntos de hidratación';
             inputDesc.value = '';
@@ -1168,7 +1432,15 @@
         });
     }
 
-    const cerrarModalAdmin = () => modalMarcador.classList.add('hidden');
+    const cerrarModalAdmin = () => {
+        modalMarcador.classList.add('hidden');
+        modoDibujarRuta = false;
+        inicioRuta = null;
+        if (btnRutaAccesible) btnRutaAccesible.textContent = '♿ Dibujar ruta accesible';
+        if (usuarioActual?.rol === 'administrador') {
+            instruccionesMapa.innerHTML = '⚠️ <span class="text-orange-400 font-bold">Modo Administrador:</span> Carga el plano y haz clic en él para agregar servicios. Usa “Dibujar ruta accesible” y marca dos puntos para trazar una ruta.';
+        }
+    };
     if (btnCancelarMarcador) btnCancelarMarcador.addEventListener('click', cerrarModalAdmin);
     if (btnCancelModal) btnCancelModal.addEventListener('click', cerrarModalAdmin);
 
@@ -1180,7 +1452,14 @@
             const tipo = inputTipo.value;
             const descripcion = inputDesc.value.trim();
             const id = inputIndiceServicio.value;
-            const payload = { ...clickCoords, tipo, descripcion };
+            const payload = {
+                x: clickCoords.x,
+                y: clickCoords.y,
+                xFin: tipo === '♿ Rutas accesibles' ? clickCoords.xFin : null,
+                yFin: tipo === '♿ Rutas accesibles' ? clickCoords.yFin : null,
+                tipo,
+                descripcion
+            };
             try {
                 if (id === '') {
                     await solicitarApi('/api/admin/services', {
@@ -1190,7 +1469,7 @@
                 } else {
                     await solicitarApi(`/api/admin/services/${encodeURIComponent(id)}`, {
                         method: 'PUT',
-                        body: JSON.stringify({ tipo, descripcion })
+                        body: JSON.stringify(payload)
                     });
                 }
                 await cargarMapaYServicios();
@@ -1220,6 +1499,33 @@
     function renderizarServiciosMapa() {
         if (!capaPines) return;
         capaPines.replaceChildren();
+        const svgNamespace = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(svgNamespace, 'svg');
+        svg.setAttribute('viewBox', '0 0 100 100');
+        svg.setAttribute('preserveAspectRatio', 'none');
+        svg.setAttribute('class', 'absolute inset-0 w-full h-full pointer-events-none');
+        serviciosMapa.filter((servicio) => servicio.tipo === '♿ Rutas accesibles'
+            && servicio.xFin !== null && servicio.yFin !== null).forEach((servicio) => {
+            const linea = document.createElementNS(svgNamespace, 'line');
+            linea.setAttribute('x1', String(servicio.x));
+            linea.setAttribute('y1', String(servicio.y));
+            linea.setAttribute('x2', String(servicio.xFin));
+            linea.setAttribute('y2', String(servicio.yFin));
+            linea.setAttribute('stroke', '#00e5ff');
+            linea.setAttribute('stroke-width', '1.2');
+            linea.setAttribute('stroke-linecap', 'round');
+            linea.setAttribute('stroke-dasharray', '2 1');
+            svg.appendChild(linea);
+            [ [servicio.x, servicio.y], [servicio.xFin, servicio.yFin] ].forEach(([x, y]) => {
+                const punto = document.createElementNS(svgNamespace, 'circle');
+                punto.setAttribute('cx', String(x));
+                punto.setAttribute('cy', String(y));
+                punto.setAttribute('r', '1.5');
+                punto.setAttribute('fill', '#00e5ff');
+                svg.appendChild(punto);
+            });
+        });
+        capaPines.appendChild(svg);
         serviciosMapa.forEach(renderizarPin);
     }
 
@@ -1258,7 +1564,7 @@
             e.stopPropagation();
             if (!esAdministrador || usuarioActual?.rol !== 'administrador') return;
 
-            clickCoords = { x: servicio.x, y: servicio.y };
+            clickCoords = { x: servicio.x, y: servicio.y, xFin: servicio.xFin, yFin: servicio.yFin };
             inputIndiceServicio.value = String(servicio.id);
             inputTipo.value = servicio.tipo;
             inputDesc.value = servicio.descripcion;

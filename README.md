@@ -25,6 +25,8 @@ El registro solicita nombre, identificación (máximo 10 caracteres), correo y c
 
 El campo `Asistente.rol` habilita los permisos de administración. Además, `jacob289355@gmail.com` siempre recibe permisos de administrador, aunque su columna `rol` tenga otro valor. La aplicación activa automáticamente las herramientas al iniciar sesión con ese correo (no hay botón de modo); el backend protege las rutas de artistas, mapa y servicios. El esquema crea las tablas auxiliares que guardan los detalles visuales de artistas y el mapa.
 
+Los administradores pueden ubicar puntos de hidratación, comida, asistencia médica y accesibilidad sobre el plano cargado, y publicar/editar/eliminar avisos oficiales desde la sección “Avisos y última hora”. Los avisos se almacenan en `aviso_festival`. El enlace de ubicación abre el mapa de Parque Norte, Medellín, para consultar el recinto y cómo llegar.
+
 Para dar permisos a un perfil desde pgAdmin, asigna su rol por correo:
 
 ```sql

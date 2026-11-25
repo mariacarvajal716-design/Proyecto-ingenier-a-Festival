@@ -354,7 +354,7 @@ app.get('/api/map', async (req, res, next) => {
     try {
         const [mapResult, serviceResult] = await Promise.all([
             pool.query('SELECT imagen_data_url FROM mapa_festival WHERE id = TRUE'),
-            pool.query('SELECT id, x, y, tipo, descripcion FROM servicio_mapa ORDER BY id')
+            pool.query('SELECT id, x, y, x_fin, y_fin, tipo, descripcion FROM servicio_mapa ORDER BY id')
         ]);
         res.json({
             imagen: mapResult.rows[0]?.imagen_data_url || null,
@@ -362,6 +362,8 @@ app.get('/api/map', async (req, res, next) => {
                 id: service.id,
                 x: Number(service.x),
                 y: Number(service.y),
+                xFin: service.x_fin === null ? null : Number(service.x_fin),
+                yFin: service.y_fin === null ? null : Number(service.y_fin),
                 tipo: service.tipo,
                 descripcion: service.descripcion
             }))
@@ -393,6 +395,8 @@ app.post('/api/admin/services', requireAuth, requireAdmin, async (req, res, next
     const body = req.body && typeof req.body === 'object' ? req.body : {};
     const x = Number(body.x);
     const y = Number(body.y);
+    const xFin = body.xFin === null || body.xFin === undefined ? null : Number(body.xFin);
+    const yFin = body.yFin === null || body.yFin === undefined ? null : Number(body.yFin);
     const tipo = typeof body.tipo === 'string' ? body.tipo.trim() : '';
     const descripcion = typeof body.descripcion === 'string' ? body.descripcion.trim() : '';
     if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || x > 100 || y < 0 || y > 100) {
@@ -401,12 +405,17 @@ app.post('/api/admin/services', requireAuth, requireAdmin, async (req, res, next
     if (tipo.length < 1 || tipo.length > 100 || descripcion.length < 1 || descripcion.length > 200) {
         return res.status(400).json({ error: 'El tipo y descripción del servicio son obligatorios (máx. 100 y 200 caracteres).' });
     }
+    if (tipo === '♿ Rutas accesibles'
+        ? !Number.isFinite(xFin) || !Number.isFinite(yFin) || xFin < 0 || xFin > 100 || yFin < 0 || yFin > 100
+        : xFin !== null || yFin !== null) {
+        return res.status(400).json({ error: 'Las rutas accesibles deben incluir dos puntos válidos en el mapa.' });
+    }
     try {
         const result = await pool.query(
-            `INSERT INTO servicio_mapa (x, y, tipo, descripcion)
-             VALUES ($1, $2, $3, $4)
-             RETURNING id, x, y, tipo, descripcion`,
-            [x, y, tipo, descripcion]
+            `INSERT INTO servicio_mapa (x, y, x_fin, y_fin, tipo, descripcion)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING id, x, y, x_fin, y_fin, tipo, descripcion`,
+            [x, y, xFin, yFin, tipo, descripcion]
         );
         res.status(201).json({ servicio: result.rows[0] });
     } catch (error) {
@@ -416,18 +425,28 @@ app.post('/api/admin/services', requireAuth, requireAdmin, async (req, res, next
 
 app.put('/api/admin/services/:id', requireAuth, requireAdmin, async (req, res, next) => {
     const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const x = Number(body.x);
+    const y = Number(body.y);
+    const xFin = body.xFin === null || body.xFin === undefined ? null : Number(body.xFin);
+    const yFin = body.yFin === null || body.yFin === undefined ? null : Number(body.yFin);
     const tipo = typeof body.tipo === 'string' ? body.tipo.trim() : '';
     const descripcion = typeof body.descripcion === 'string' ? body.descripcion.trim() : '';
     if (!/^\d+$/.test(req.params.id)
+        || !Number.isFinite(x) || !Number.isFinite(y) || x < 0 || x > 100 || y < 0 || y > 100
         || tipo.length < 1 || tipo.length > 100
         || descripcion.length < 1 || descripcion.length > 200) {
         return res.status(400).json({ error: 'El tipo o la descripción del servicio no son válidos.' });
     }
+    if (tipo === '♿ Rutas accesibles'
+        ? !Number.isFinite(xFin) || !Number.isFinite(yFin) || xFin < 0 || xFin > 100 || yFin < 0 || yFin > 100
+        : xFin !== null || yFin !== null) {
+        return res.status(400).json({ error: 'Las rutas accesibles deben incluir dos puntos válidos en el mapa.' });
+    }
     try {
         const result = await pool.query(
-            `UPDATE servicio_mapa SET tipo = $1, descripcion = $2
-             WHERE id = $3 RETURNING id`,
-            [tipo, descripcion, req.params.id]
+            `UPDATE servicio_mapa SET x = $1, y = $2, x_fin = $3, y_fin = $4, tipo = $5, descripcion = $6
+             WHERE id = $7 RETURNING id`,
+            [x, y, xFin, yFin, tipo, descripcion, req.params.id]
         );
         if (result.rowCount === 0) {
             return res.status(404).json({ error: 'No se encontró el servicio.' });
@@ -469,6 +488,96 @@ app.delete('/api/admin/map', requireAuth, requireAdmin, async (req, res, next) =
         next(error);
     } finally {
         client.release();
+    }
+});
+
+app.get('/api/announcements', async (req, res, next) => {
+    try {
+        const result = await pool.query(
+            `SELECT id, titulo, mensaje, categoria, creado_en
+             FROM aviso_festival
+             ORDER BY creado_en DESC, id DESC`
+        );
+        res.json({
+            avisos: result.rows.map((row) => ({
+                id: row.id,
+                titulo: row.titulo,
+                mensaje: row.mensaje,
+                categoria: row.categoria,
+                creadoEn: row.creado_en
+            }))
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/admin/announcements', requireAuth, requireAdmin, async (req, res, next) => {
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const titulo = typeof body.titulo === 'string' ? body.titulo.trim() : '';
+    const mensaje = typeof body.mensaje === 'string' ? body.mensaje.trim() : '';
+    const categoria = typeof body.categoria === 'string' ? body.categoria : '';
+    if (titulo.length < 1 || titulo.length > 120 || mensaje.length < 1 || mensaje.length > 1000
+        || !['Información', 'Última hora', 'Accesibilidad'].includes(categoria)) {
+        return res.status(400).json({ error: 'El título, mensaje o categoría del aviso no son válidos.' });
+    }
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO aviso_festival (titulo, mensaje, categoria)
+             VALUES ($1, $2, $3)
+             RETURNING id, titulo, mensaje, categoria, creado_en`,
+            [titulo, mensaje, categoria]
+        );
+        res.status(201).json({ aviso: result.rows[0] });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.put('/api/admin/announcements/:id', requireAuth, requireAdmin, async (req, res, next) => {
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const titulo = typeof body.titulo === 'string' ? body.titulo.trim() : '';
+    const mensaje = typeof body.mensaje === 'string' ? body.mensaje.trim() : '';
+    const categoria = typeof body.categoria === 'string' ? body.categoria : '';
+    if (!/^\d+$/.test(req.params.id)
+        || titulo.length < 1 || titulo.length > 120 || mensaje.length < 1 || mensaje.length > 1000
+        || !['Información', 'Última hora', 'Accesibilidad'].includes(categoria)) {
+        return res.status(400).json({ error: 'El aviso no es válido.' });
+    }
+
+    try {
+        const result = await pool.query(
+            `UPDATE aviso_festival
+             SET titulo = $1, mensaje = $2, categoria = $3
+             WHERE id = $4
+             RETURNING id`,
+            [titulo, mensaje, categoria, req.params.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'No se encontró el aviso.' });
+        }
+        res.status(204).end();
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.delete('/api/admin/announcements/:id', requireAuth, requireAdmin, async (req, res, next) => {
+    if (!/^\d+$/.test(req.params.id)) {
+        return res.status(400).json({ error: 'El identificador del aviso no es válido.' });
+    }
+    try {
+        const result = await pool.query(
+            'DELETE FROM aviso_festival WHERE id = $1 RETURNING id',
+            [req.params.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'No se encontró el aviso.' });
+        }
+        res.status(204).end();
+    } catch (error) {
+        next(error);
     }
 });
 

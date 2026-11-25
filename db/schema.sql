@@ -138,6 +138,20 @@ CREATE TABLE IF NOT EXISTS servicio_mapa (
     id BIGSERIAL PRIMARY KEY,
     x NUMERIC(5, 2) NOT NULL CHECK (x >= 0 AND x <= 100),
     y NUMERIC(5, 2) NOT NULL CHECK (y >= 0 AND y <= 100),
+    x_fin NUMERIC(5, 2),
+    y_fin NUMERIC(5, 2),
     tipo VARCHAR(100) NOT NULL,
     descripcion VARCHAR(200) NOT NULL
+);
+
+ALTER TABLE servicio_mapa
+    ADD COLUMN IF NOT EXISTS x_fin NUMERIC(5, 2),
+    ADD COLUMN IF NOT EXISTS y_fin NUMERIC(5, 2);
+
+CREATE TABLE IF NOT EXISTS aviso_festival (
+    id BIGSERIAL PRIMARY KEY,
+    titulo VARCHAR(120) NOT NULL,
+    mensaje VARCHAR(1000) NOT NULL,
+    categoria VARCHAR(30) NOT NULL CHECK (categoria IN ('Información', 'Última hora', 'Accesibilidad')),
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
