@@ -78,6 +78,7 @@
     </ul>
 
     <div class="top-actions flex space-x-4 items-center">
+        <button id="btn-abrir-acceso" class="!hidden bg-zinc-800 hover:bg-zinc-700 text-orange-400 border border-orange-500/50 px-3 py-2 rounded text-xs font-bold cursor-pointer">🎟️ Control Acceso QR</button>
         <button id="abrir-perfil" class="hidden text-gray-300 hover:text-white font-bold text-sm mr-2 cursor-pointer">Mi Perfil</button>
         <button id="abrir-login" class="text-gray-300 hover:text-white font-bold text-sm cursor-pointer">Iniciar Sesión</button>
         <button id="abrir-modal" class="text-white font-bold hover:text-orange-500 cursor-pointer">Registrarse</button>
@@ -85,7 +86,7 @@
     </div>
 </nav>
 
-<!-- Modal de Inicio de Sesión (Agregado) -->
+<!-- Modal de Inicio de Sesión -->
 <div id="modal-login" class="fixed inset-0 bg-black/80 hidden flex justify-center items-center z-50">
     <div class="max-w-md w-full bg-zinc-900 p-8 rounded-lg border border-zinc-800 relative">
         <button id="cerrar-login" class="absolute top-4 right-4 text-gray-400 hover:text-white font-bold text-xl">✕</button>
@@ -181,7 +182,6 @@
         <p class="text-gray-400 text-sm mb-6">Elige tu jornada, localidad, datos del asistente y medio de pago.</p>
 
         <form id="formulario-compra" class="space-y-6">
-            <!-- BLOQUE 1: JORNADA Y LOCALIDAD -->
             <div class="space-y-4">
                 <p class="text-xs font-bold text-orange-500 uppercase tracking-widest border-b border-zinc-800 pb-2">1. Jornada y Localidad</p>
 
@@ -219,7 +219,6 @@
                 </div>
             </div>
 
-            <!-- BLOQUE 2: DATOS DEL ASISTENTE -->
             <div class="space-y-3">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-2">
                     <p class="text-xs font-bold text-orange-500 uppercase tracking-widest">2. Datos del Asistente</p>
@@ -249,7 +248,6 @@
                 </div>
             </div>
 
-            <!-- BLOQUE 3: PREFERENCIAS DE ACCESIBILIDAD Y ENVÍO -->
             <div class="space-y-3">
                 <p class="text-xs font-bold text-orange-500 uppercase tracking-widest border-b border-zinc-800 pb-2">3. Preferencias y Accesibilidad</p>
 
@@ -281,7 +279,6 @@
                 </div>
             </div>
 
-            <!-- BLOQUE 4: MEDIO DE PAGO -->
             <div class="space-y-3">
                 <p class="text-xs font-bold text-orange-500 uppercase tracking-widest border-b border-zinc-800 pb-2">4. Medio de Pago</p>
 
@@ -298,7 +295,6 @@
                     </button>
                 </div>
 
-                <!-- Panel PSE -->
                 <div id="panel-pago-pse" class="bg-zinc-950 border border-zinc-800 rounded p-4 space-y-3">
                     <p class="text-xs font-bold text-orange-400 uppercase">Pago por PSE (Débito bancario)</p>
                     <div>
@@ -328,7 +324,6 @@
                     </div>
                 </div>
 
-                <!-- Panel Tarjeta Crédito / Débito -->
                 <div id="panel-pago-tarjeta" class="hidden bg-zinc-950 border border-zinc-800 rounded p-4 space-y-3">
                     <p class="text-xs font-bold text-orange-400 uppercase">Tarjeta de Crédito o Débito</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -360,7 +355,6 @@
                     </div>
                 </div>
 
-                <!-- Panel Efectivo (Puntos autorizados) -->
                 <div id="panel-pago-efectivo" class="hidden bg-zinc-950 border border-zinc-800 rounded p-4 space-y-3">
                     <p class="text-xs font-bold text-orange-400 uppercase">Pago en Efectivo (Puntos autorizados)</p>
                     <div>
@@ -377,7 +371,6 @@
                 </div>
             </div>
 
-            <!-- Resumen y Términos -->
             <div class="bg-zinc-950 border border-zinc-800 rounded p-4 space-y-1">
                 <p class="text-xs uppercase text-gray-400">Resumen de tu pedido</p>
                 <p id="resumen-compra" class="text-lg font-bold text-white">1 entrada General • Día 1 · 12 Feb</p>
@@ -399,7 +392,7 @@
     </div>
 </div>
 
-<!-- Modal de Perfil (HU 6 / HU 7: Consultar historial y estado de entradas) -->
+<!-- Modal de Perfil (HU 6 / HU 7) -->
 <div id="modal-perfil" class="fixed inset-0 bg-black/95 hidden flex justify-center items-center z-50">
     <div class="max-w-2xl w-full bg-zinc-900 p-8 rounded-lg border border-zinc-700 relative">
         <button id="cerrar-perfil" class="absolute top-4 right-4 text-gray-400 hover:text-white font-bold text-xl">✕</button>
@@ -427,7 +420,7 @@
     </div>
 </div>
 
-<!-- Modal de Visualización de Código QR (HU 8: Mostrar entrada mediante código QR) -->
+<!-- Modal de Visualización de Código QR (HU 8) -->
 <div id="modal-qr" class="fixed inset-0 bg-black/90 hidden flex justify-center items-center z-50">
     <div class="max-w-md w-full bg-zinc-900 p-8 rounded-lg border border-orange-500 relative text-center">
         <button id="cerrar-qr" class="absolute top-4 right-4 text-gray-400 hover:text-white font-bold text-xl">✕</button>
@@ -435,7 +428,6 @@
         <h2 id="qr-titulo-entrada" class="text-2xl font-extrabold mb-1">Entrada General - Día 1</h2>
         <p id="qr-detalle-fecha" class="text-gray-400 text-sm mb-6">12 Feb 2027 • Parque Norte</p>
 
-        <!-- Contenedor del Código QR (Tamaño y contraste óptimo - Criterios HU 8) -->
         <div class="bg-white p-6 rounded-lg inline-block shadow-2xl mb-4 border-4 border-zinc-950">
             <div id="contenedor-qr-svg" class="w-48 h-48 bg-zinc-900 text-white flex flex-col justify-center items-center p-2 rounded">
                 <div class="grid grid-cols-6 gap-1 w-full h-full bg-white p-2 text-zinc-950 font-mono text-[8px] font-bold select-none">
@@ -486,6 +478,32 @@
             <div class="flex justify-end space-x-3 pt-2">
                 <button type="button" id="btn-cancelar-artista" class="px-4 py-2 text-sm font-bold text-gray-400 hover:text-white cursor-pointer">Cancelar</button>
                 <button type="submit" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-6 py-2 font-bold rounded-sm text-sm cursor-pointer">Guardar Artista</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Administrador: Editar Presentación de Artista -->
+<div id="modal-editar-artista" class="fixed inset-0 bg-black/80 hidden flex justify-center items-center z-50">
+    <div class="max-w-md w-11/12 sm:w-full bg-zinc-900 p-6 rounded-lg border border-orange-500">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-orange-500">✏️ [ADMIN] Editar Presentación</h3>
+            <button id="cerrar-editar-artista" type="button" class="text-gray-400 hover:text-white font-bold text-xl cursor-pointer">✕</button>
+        </div>
+        <form id="form-editar-artista" class="space-y-4">
+            <input type="hidden" id="editar-artista-id">
+            <p id="editar-artista-nombre" class="text-sm font-bold text-white"></p>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Escenario</label>
+                <input type="text" id="editar-artista-escenario" required class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Día y Horario</label>
+                <input type="text" id="editar-artista-horario" required placeholder="Ej: 13 Feb • Día 2 • 22:00 hrs" class="w-full bg-zinc-950 border border-zinc-700 text-white px-4 py-2 rounded focus:outline-none focus:border-orange-500">
+            </div>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" id="btn-cancelar-editar-artista" class="px-4 py-2 text-sm font-bold text-gray-400 hover:text-white cursor-pointer">Cancelar</button>
+                <button type="submit" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 px-6 py-2 font-bold rounded-sm text-sm cursor-pointer">Guardar cambios</button>
             </div>
         </form>
     </div>
@@ -560,7 +578,6 @@
             </button>
         </div>
 
-        <!-- Filtros por día de presentación -->
         <div class="flex flex-wrap items-center justify-between gap-4 mb-8 pb-4 border-b border-zinc-800">
             <div id="filtros-dia-parrilla" class="flex flex-wrap gap-2">
                 <button type="button" data-dia="todos" class="btn-filtro-dia bg-orange-600 text-zinc-950 px-4 py-2 rounded font-bold text-xs uppercase cursor-pointer transition-colors">
@@ -579,9 +596,7 @@
             <p id="contador-parrilla" class="text-xs text-gray-400 font-semibold"></p>
         </div>
 
-        <div id="grid-lineup" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            <!-- Renderizado dinámico de artistas filtrados por día -->
-        </div>
+        <div id="grid-lineup" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
     </section>
 
     <!-- SECCIÓN: MAPA Y SERVICIOS -->
@@ -625,6 +640,61 @@
                class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded text-sm font-bold border border-zinc-700">
                 📍 Ver ubicación y cómo llegar
             </a>
+        </div>
+    </section>
+
+    <!-- SECCIÓN: CONTROL DE ACCESO QR (ADMIN) -->
+    <section id="control-acceso" class="py-16 border-t border-zinc-800 !hidden">
+        <div class="flex flex-wrap justify-between items-end gap-4 mb-6">
+            <div>
+                <span class="text-orange-500 font-bold text-xs tracking-widest uppercase">Logística y Puerta</span>
+                <h2 class="text-4xl font-extrabold mt-1">CONTROL DE ACCESO QR</h2>
+            </div>
+            <button id="btn-refrescar-logs" type="button" class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded text-xs font-bold border border-zinc-700 cursor-pointer">
+                ↻ Actualizar registro
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-zinc-900 p-6 rounded-lg border border-zinc-800 space-y-4">
+                <h3 class="text-lg font-bold text-white">Validar código de entrada</h3>
+                <form id="form-validar-qr" class="flex gap-2">
+                    <input
+                            type="text"
+                            id="input-codigo-qr"
+                            maxlength="50"
+                            required
+                            placeholder="Ej: E01, E02 o NB-9X82PL"
+                            class="flex-1 bg-zinc-950 border border-zinc-700 text-white px-4 py-2.5 rounded uppercase font-mono focus:outline-none focus:border-orange-500"
+                    >
+                    <button type="submit" class="bg-orange-600 hover:bg-orange-500 text-zinc-950 font-bold px-5 py-2.5 rounded text-sm cursor-pointer">
+                        Validar
+                    </button>
+                </form>
+
+                <div id="alerta-qr" class="hidden p-4 rounded-lg border text-sm font-bold space-y-1" role="alert"></div>
+            </div>
+
+            <div class="bg-zinc-900 p-6 rounded-lg border border-zinc-800">
+                <h3 class="text-lg font-bold text-white mb-4">Registro de accesos recientes</h3>
+                <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                        <tr class="border-b border-zinc-800 text-gray-400 uppercase">
+                            <th class="py-2 pr-3">Código</th>
+                            <th class="py-2 pr-3">Estado</th>
+                            <th class="py-2 pr-3">Asistente / Tipo</th>
+                            <th class="py-2">Hora</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tabla-logs-acceso" class="divide-y divide-zinc-800/70">
+                        <tr>
+                            <td colspan="4" class="py-4 text-center text-gray-500">Sin registros cargados.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -704,7 +774,6 @@
 </div>
 
 <script>
-    // --- CONTROL DE ROL DE ADMINISTRADOR ---
     let esAdministrador = false;
     const instruccionesMapa = document.getElementById('instrucciones-mapa');
     const btnLimpiarMapa = document.getElementById('btn-limpiar-mapa');
@@ -769,6 +838,20 @@
         return datos;
     }
 
+    async function consultarValidacionQr(codigo) {
+        const respuesta = await fetch('/api/admin/qr/validate', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ codigo })
+        });
+        const datos = await respuesta.json().catch(() => ({}));
+        if (!respuesta.ok && !datos.status) {
+            throw new Error(datos?.error || 'No se pudo validar el código QR.');
+        }
+        return datos;
+    }
+
     function actualizarBotonesAuth() {
         const botonPerfil = document.getElementById('abrir-perfil');
         const botonLogin = document.getElementById('abrir-login');
@@ -778,17 +861,9 @@
 
         const estaAutenticado = Boolean(usuarioActual);
 
-        if (botonPerfil) {
-            botonPerfil.classList.toggle('hidden', !estaAutenticado);
-        }
-
-        if (botonLogin) {
-            botonLogin.classList.toggle('hidden', estaAutenticado);
-        }
-
-        if (botonRegistro) {
-            botonRegistro.classList.toggle('hidden', estaAutenticado);
-        }
+        if (botonPerfil) botonPerfil.classList.toggle('hidden', !estaAutenticado);
+        if (botonLogin) botonLogin.classList.toggle('hidden', estaAutenticado);
+        if (botonRegistro) botonRegistro.classList.toggle('hidden', estaAutenticado);
         if (perfilNombre) perfilNombre.textContent = usuarioActual?.nombre || '';
         if (perfilCorreo) perfilCorreo.textContent = usuarioActual?.correo || '';
         actualizarControlesAdmin();
@@ -798,6 +873,8 @@
         const esAdminAutorizado = usuarioActual?.rol === 'administrador';
         const btnAdminArtista = document.getElementById('btn-abrir-modal-artista');
         const btnCrearAviso = document.getElementById('btn-crear-aviso');
+        const seccionAcceso = document.getElementById('control-acceso');
+        const btnAbrirAcceso = document.getElementById('btn-abrir-acceso');
 
         esAdministrador = esAdminAutorizado;
 
@@ -806,6 +883,8 @@
         if (labelCargarMapa) labelCargarMapa.classList.toggle('!hidden', !esAdministrador);
         if (btnAdminArtista) btnAdminArtista.classList.toggle('!hidden', !esAdministrador);
         if (btnCrearAviso) btnCrearAviso.classList.toggle('!hidden', !esAdministrador);
+        if (seccionAcceso) seccionAcceso.classList.toggle('!hidden', !esAdministrador);
+        if (btnAbrirAcceso) btnAbrirAcceso.classList.toggle('!hidden', !esAdministrador);
 
         if (subtextoPlaceholder && instruccionesMapa) {
             if (esAdministrador) {
@@ -815,6 +894,10 @@
                 subtextoPlaceholder.innerText = 'El mapa oficial estará disponible próximamente.';
                 instruccionesMapa.innerHTML = 'ℹ️ <span class="text-gray-200">Modo Asistente:</span> Puedes ver todos los servicios oficiales activos en el mapa interactivo.';
             }
+        }
+
+        if (esAdministrador) {
+            cargarLogsAcceso();
         }
 
         cargarMapaYServicios();
@@ -834,7 +917,7 @@
         actualizarBotonesAuth();
     }
 
-    // --- LÓGICA DE INICIO DE SESIÓN Y REGISTRO ---
+    // --- INICIO DE SESIÓN Y REGISTRO ---
     const modalLogin = document.getElementById('modal-login');
     const abrirLogin = document.getElementById('abrir-login');
     const cerrarLogin = document.getElementById('cerrar-login');
@@ -892,9 +975,7 @@
 
     if (abrirModalRegistro) {
         abrirModalRegistro.addEventListener('click', () => {
-            if (usuarioActual) {
-                return;
-            }
+            if (usuarioActual) return;
             abrirModal('modal-registro');
         });
     }
@@ -955,7 +1036,7 @@
 
     sincronizarSesion();
 
-// --- COMPRA DE ENTRADAS Y PASARELA DE PAGOS ---
+    // --- COMPRA DE ENTRADAS Y PASARELA DE PAGOS ---
     const modalCompra = document.getElementById('modal-compra');
     const cerrarCompra = document.getElementById('cerrar-compra');
     const tipoEntrada = document.getElementById('tipo-entrada');
@@ -1242,10 +1323,8 @@
 
     cargarTiposEntrada();
 
-    /// FILA VIRTUAL - HU 2
+    // --- FILA VIRTUAL - HU 2 ---
     const modalFila = document.getElementById('modal-fila');
-    const btnAbrirFilaNav = document.getElementById('abrir-fila');
-    const btnAbrirFilaCentro = document.getElementById('abrir-fila-centro');
     const btnCerrarFila = document.getElementById('cerrar-fila');
     const tiempoTexto = document.getElementById('tiempo-espera');
     const personasTexto = document.getElementById('personas-fila');
@@ -1392,13 +1471,50 @@
 
     if (cerrarQR) cerrarQR.addEventListener('click', () => modalQR.classList.add('hidden'));
 
-    // --- HU 9: AGREGAR UN NUEVO ARTISTA AL LINE-UP (ORGANIZADOR) ---
+    // --- HU 9 & EDICIÓN: AGREGAR Y EDITAR ARTISTAS EN EL LINE-UP ---
     const modalArtista = document.getElementById('modal-artista');
     const btnAbrirModalArtista = document.getElementById('btn-abrir-modal-artista');
     const cerrarModalArtista = document.getElementById('cerrar-modal-artista');
     const btnCancelarArtista = document.getElementById('btn-cancelar-artista');
     const formArtista = document.getElementById('form-artista');
     const gridLineup = document.getElementById('grid-lineup');
+
+    const modalEditarArtista = document.getElementById('modal-editar-artista');
+    const formEditarArtista = document.getElementById('form-editar-artista');
+
+    function abrirModalEditarArtista(artista) {
+        if (!esAdministrador || usuarioActual?.rol !== 'administrador') return;
+        document.getElementById('editar-artista-id').value = artista.id;
+        document.getElementById('editar-artista-nombre').textContent = `Artista: ${artista.nombre}`;
+        document.getElementById('editar-artista-escenario').value = artista.escenario || '';
+        document.getElementById('editar-artista-horario').value = artista.horario || '';
+        abrirModal('modal-editar-artista');
+    }
+
+    document.getElementById('cerrar-editar-artista')?.addEventListener('click', () => cerrarModal('modal-editar-artista'));
+    document.getElementById('btn-cancelar-editar-artista')?.addEventListener('click', () => cerrarModal('modal-editar-artista'));
+
+    if (formEditarArtista) {
+        formEditarArtista.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!esAdministrador || usuarioActual?.rol !== 'administrador') return;
+
+            const id = document.getElementById('editar-artista-id')?.value || '';
+            const escenario = (document.getElementById('editar-artista-escenario')?.value || '').trim();
+            const horario = (document.getElementById('editar-artista-horario')?.value || '').trim();
+
+            try {
+                await solicitarApi(`/api/admin/artists/${encodeURIComponent(id)}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ escenario, horario })
+                });
+                cerrarModal('modal-editar-artista');
+                await cargarArtistasLineup();
+            } catch (error) {
+                window.alert(error.message);
+            }
+        });
+    }
 
     if (btnAbrirModalArtista) btnAbrirModalArtista.addEventListener('click', () => {
         if (usuarioActual?.rol === 'administrador' && esAdministrador) {
@@ -1532,6 +1648,12 @@
             details.append(name, stage, schedule);
 
             if (esAdministrador && usuarioActual?.rol === 'administrador') {
+                const editButton = document.createElement('button');
+                editButton.type = 'button';
+                editButton.className = 'mt-4 mr-4 text-xs text-orange-400 hover:text-orange-300 underline cursor-pointer';
+                editButton.textContent = 'Editar presentación';
+                editButton.addEventListener('click', () => abrirModalEditarArtista(artista));
+
                 const deleteButton = document.createElement('button');
                 deleteButton.type = 'button';
                 deleteButton.className = 'mt-4 text-xs text-red-400 hover:text-red-300 underline cursor-pointer';
@@ -1545,7 +1667,7 @@
                         window.alert(error.message);
                     }
                 });
-                details.appendChild(deleteButton);
+                details.append(editButton, deleteButton);
             }
 
             card.append(imageContainer, details);
@@ -1565,12 +1687,143 @@
         }
     }
 
+    // --- CONTROL DE ACCESO QR Y REGISTRO ---
+    const formValidarQr = document.getElementById('form-validar-qr');
+    const inputCodigoQr = document.getElementById('input-codigo-qr');
+    const alertaQr = document.getElementById('alerta-qr');
+    const tablaLogsAcceso = document.getElementById('tabla-logs-acceso');
+    const btnRefrescarLogs = document.getElementById('btn-refrescar-logs');
+    const btnAbrirAcceso = document.getElementById('btn-abrir-acceso');
+
+    if (btnAbrirAcceso) {
+        btnAbrirAcceso.addEventListener('click', () => {
+            document.getElementById('control-acceso')?.scrollIntoView({ behavior: 'smooth' });
+            inputCodigoQr?.focus();
+        });
+    }
+
+    function pintarAlertaQr(datos) {
+        if (!alertaQr) return;
+        alertaQr.classList.remove(
+            'hidden',
+            'bg-green-950/60', 'border-green-500', 'text-green-300',
+            'bg-amber-950/60', 'border-amber-500', 'text-amber-300',
+            'bg-red-950/60', 'border-red-500', 'text-red-300'
+        );
+
+        if (datos.status === 'valido') {
+            alertaQr.classList.add('bg-green-950/60', 'border-green-500', 'text-green-300');
+            alertaQr.innerHTML = `
+                <p class="uppercase text-xs tracking-wider">✅ Acceso válido</p>
+                <p>${datos.mensaje}</p>
+                <p class="text-xs font-normal text-green-200/80">Asistente: ${datos.entrada?.asistente || '-'} • Tipo: ${datos.entrada?.tipo || '-'}</p>
+            `;
+        } else if (datos.status === 'ya_redimida') {
+            alertaQr.classList.add('bg-amber-950/60', 'border-amber-500', 'text-amber-300');
+            const horaUso = datos.fechaRedencion
+                ? new Date(datos.fechaRedencion).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })
+                : 'previamente';
+            alertaQr.innerHTML = `
+                <p class="uppercase text-xs tracking-wider">⚠️ Código ya redimido</p>
+                <p>${datos.alerta}</p>
+                <p class="text-xs font-normal text-amber-200/80">Redimida: ${horaUso} • Asistente: ${datos.entrada?.asistente || '-'}</p>
+            `;
+        } else {
+            alertaQr.classList.add('bg-red-950/60', 'border-red-500', 'text-red-300');
+            alertaQr.innerHTML = `
+                <p class="uppercase text-xs tracking-wider">🚫 Código inválido</p>
+                <p>${datos.alerta || 'El código escaneado no es válido.'}</p>
+            `;
+        }
+    }
+
+    async function cargarLogsAcceso() {
+        if (!tablaLogsAcceso || !esAdministrador) return;
+        try {
+            const datos = await solicitarApi('/api/admin/access-logs');
+            const registros = datos.registros || [];
+            tablaLogsAcceso.replaceChildren();
+
+            if (registros.length === 0) {
+                tablaLogsAcceso.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-500">Aún no hay escaneos registrados.</td></tr>';
+                return;
+            }
+
+            registros.forEach((reg) => {
+                const tr = document.createElement('tr');
+
+                const tdCodigo = document.createElement('td');
+                tdCodigo.className = 'py-2 pr-3 font-mono font-bold text-white';
+                tdCodigo.textContent = reg.codigoEscaneado;
+
+                const tdEstado = document.createElement('td');
+                tdEstado.className = 'py-2 pr-3 font-bold uppercase';
+                if (reg.resultado === 'valido') {
+                    tdEstado.classList.add('text-green-400');
+                    tdEstado.textContent = 'Válido';
+                } else if (reg.resultado === 'ya_redimida') {
+                    tdEstado.classList.add('text-amber-400');
+                    tdEstado.textContent = 'Ya redimida';
+                } else {
+                    tdEstado.classList.add('text-red-400');
+                    tdEstado.textContent = 'Inválida';
+                }
+
+                const tdInfo = document.createElement('td');
+                tdInfo.className = 'py-2 pr-3 text-gray-300';
+                tdInfo.textContent = reg.asistente
+                    ? `${reg.asistente} (${reg.tipoEntrada || 'General'})`
+                    : 'No asociado';
+
+                const tdFecha = document.createElement('td');
+                tdFecha.className = 'py-2 text-gray-400';
+                tdFecha.textContent = new Date(reg.fechaAcceso).toLocaleTimeString('es-CO', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+
+                tr.append(tdCodigo, tdEstado, tdInfo, tdFecha);
+                tablaLogsAcceso.appendChild(tr);
+            });
+        } catch (error) {
+            console.error('Error cargando registro de accesos:', error);
+        }
+    }
+
+    if (btnRefrescarLogs) {
+        btnRefrescarLogs.addEventListener('click', cargarLogsAcceso);
+    }
+
+    if (formValidarQr) {
+        formValidarQr.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!esAdministrador || usuarioActual?.rol !== 'administrador') return;
+
+            const codigo = (inputCodigoQr?.value || '').trim();
+            if (!codigo) return;
+
+            try {
+                const resultado = await consultarValidacionQr(codigo);
+                pintarAlertaQr(resultado);
+                await cargarLogsAcceso();
+                if (inputCodigoQr) {
+                    inputCodigoQr.value = '';
+                    inputCodigoQr.focus();
+                }
+            } catch (error) {
+                pintarAlertaQr({ status: 'invalida', alerta: error.message });
+            }
+        });
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
         cargarArtistasLineup();
         cargarMapaYServicios();
         cargarAvisos();
     });
 
+    // --- AVISOS OFICIALES ---
     const btnCrearAviso = document.getElementById('btn-crear-aviso');
     const formAviso = document.getElementById('form-aviso');
     const avisoId = document.getElementById('aviso-id');

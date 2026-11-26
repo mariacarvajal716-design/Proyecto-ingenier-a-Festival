@@ -669,6 +669,137 @@ app.post('/api/tickets', requireAuth, async (req, res, next) => {
     }
 });
 
+app.post('/api/admin/qr/validate', requireAuth, requireAdmin, async (req, res, next) => {
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const rawCode = typeof body.codigo === 'string' ? body.codigo.trim().toUpperCase() : '';
+
+    if (!rawCode || rawCode.length > 50) {
+        return res.status(400).json({
+            status: 'invalida',
+            alerta: 'Código inválido: ingresa un código QR válido.'
+        });
+    }
+
+    const client = await pool.connect();
+    let transactionStarted = false;
+
+    try {
+        await client.query('BEGIN');
+        transactionStarted = true;
+
+        const ticketResult = await client.query(
+            `SELECT e.cod_entrada, e.estado_qr, e.fecha_redencion, e.fecha_compra,
+                    e.num_identificacion, te.tipo_entrada, a.nombre AS asistente_nombre
+             FROM entrada e
+             LEFT JOIN tipo_entrada te ON te.id_tipo_entrada = e.id_tipo_entrada
+             LEFT JOIN asistente a ON a.num_identificacion = e.num_identificacion
+             WHERE UPPER(e.cod_entrada) = $1
+             FOR UPDATE OF e`,
+            [rawCode]
+        );
+
+        if (ticketResult.rowCount === 0) {
+            await client.query(
+                `INSERT INTO registro_acceso (codigo_escaneado, cod_entrada, resultado)
+                 VALUES ($1, NULL, 'invalida')`,
+                [rawCode]
+            );
+            await client.query('COMMIT');
+            transactionStarted = false;
+
+            return res.status(404).json({
+                status: 'invalida',
+                alerta: `ALERTA: El código "${rawCode}" no existe o es inválido.`
+            });
+        }
+
+        const ticket = ticketResult.rows[0];
+
+        if (ticket.estado_qr === 'redimida') {
+            await client.query(
+                `INSERT INTO registro_acceso (codigo_escaneado, cod_entrada, resultado)
+                 VALUES ($1, $2, 'ya_redimida')`,
+                [rawCode, ticket.cod_entrada]
+            );
+            await client.query('COMMIT');
+            transactionStarted = false;
+
+            return res.status(409).json({
+                status: 'ya_redimida',
+                alerta: `ALERTA DE SEGURIDAD: La entrada "${ticket.cod_entrada}" ya fue redimida.`,
+                fechaRedencion: ticket.fecha_redencion,
+                entrada: {
+                    codigo: ticket.cod_entrada,
+                    tipo: ticket.tipo_entrada || 'General',
+                    asistente: ticket.asistente_nombre || ticket.num_identificacion
+                }
+            });
+        }
+
+        const updatedResult = await client.query(
+            `UPDATE entrada
+             SET estado_qr = 'redimida', fecha_redencion = NOW()
+             WHERE cod_entrada = $1
+             RETURNING cod_entrada, estado_qr, fecha_redencion`,
+            [ticket.cod_entrada]
+        );
+
+        await client.query(
+            `INSERT INTO registro_acceso (codigo_escaneado, cod_entrada, resultado)
+             VALUES ($1, $2, 'valido')`,
+            [rawCode, ticket.cod_entrada]
+        );
+
+        await client.query('COMMIT');
+        transactionStarted = false;
+
+        return res.json({
+            status: 'valido',
+            mensaje: `Acceso aprobado: entrada "${ticket.cod_entrada}" redimida con éxito.`,
+            fechaRedencion: updatedResult.rows[0].fecha_redencion,
+            entrada: {
+                codigo: ticket.cod_entrada,
+                tipo: ticket.tipo_entrada || 'General',
+                asistente: ticket.asistente_nombre || ticket.num_identificacion,
+                estadoQr: updatedResult.rows[0].estado_qr
+            }
+        });
+    } catch (error) {
+        if (transactionStarted) await client.query('ROLLBACK');
+        next(error);
+    } finally {
+        client.release();
+    }
+});
+
+app.get('/api/admin/access-logs', requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+        const result = await pool.query(
+            `SELECT r.id_acceso, r.codigo_escaneado, r.cod_entrada, r.resultado, r.fecha_acceso,
+                    te.tipo_entrada, a.nombre AS asistente_nombre
+             FROM registro_acceso r
+             LEFT JOIN entrada e ON e.cod_entrada = r.cod_entrada
+             LEFT JOIN tipo_entrada te ON te.id_tipo_entrada = e.id_tipo_entrada
+             LEFT JOIN asistente a ON a.num_identificacion = e.num_identificacion
+             ORDER BY r.fecha_acceso DESC, r.id_acceso DESC
+             LIMIT 100`
+        );
+        res.json({
+            registros: result.rows.map((row) => ({
+                id: row.id_acceso,
+                codigoEscaneado: row.codigo_escaneado,
+                codigoEntrada: row.cod_entrada,
+                resultado: row.resultado,
+                fechaAcceso: row.fecha_acceso,
+                tipoEntrada: row.tipo_entrada || null,
+                asistente: row.asistente_nombre || null
+            }))
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
 app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Ruta de API no encontrada.' });
 });
